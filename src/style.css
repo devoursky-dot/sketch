@@ -85,6 +85,7 @@ body {
   backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border-subtle);
   z-index: 100;
+  transition: all 0.2s ease;
 }
 
 .logo-group {
@@ -443,9 +444,11 @@ body {
   position: relative;
   width: 854px;
   height: 480px;
+  max-width: 100%;
+  max-height: 100%;
   box-shadow: 0 12px 48px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.1);
   border-radius: 8px;
-  background: #ffffff; /* Crisp white sketchbook paper - ensures drawings are never shown on pitch black */
+  background: #ffffff; /* Crisp white sketchbook paper */
   overflow: hidden;
   touch-action: none !important;
 }
@@ -487,6 +490,7 @@ body {
    ========================================================================== */
 
 .property-panel {
+  width: 280px;
   background: var(--bg-surface);
   backdrop-filter: blur(14px);
   border-left: 1px solid var(--border-subtle);
@@ -496,6 +500,37 @@ body {
   gap: 14px;
   z-index: 10;
   overflow-y: auto;
+  transition: all 0.2s ease;
+}
+
+/* ==========================================================================
+   Responsive Device Adaptation (PC vs Tablet Mode)
+   ========================================================================== */
+
+/* Automatically switch to tablet full-canvas on touchscreens or narrower screens */
+@media (max-width: 1024px), (hover: none) and (pointer: coarse) {
+  .top-bar {
+    display: none !important;
+  }
+  .property-panel {
+    display: none !important;
+  }
+}
+
+/* Explicit Tablet Mode Toggle (Works on any device) */
+.app-container.tablet-mode .top-bar {
+  display: none !important;
+}
+.app-container.tablet-mode .property-panel {
+  display: none !important;
+}
+
+/* Fullscreen Immersive Canvas (Hides all surrounding bars) */
+:fullscreen .top-bar,
+:fullscreen .property-panel,
+.app-container.is-fullscreen .top-bar,
+.app-container.is-fullscreen .property-panel {
+  display: none !important;
 }
 
 .panel-card {
@@ -2242,3 +2277,550 @@ input[type='color']::-webkit-color-swatch {
   margin-right: 6px;
 }
 
+/* ==========================================================================
+   Tablet-Optimized UI & Fullscreen, Step Dropdown, Frame Gallery Modal
+   ========================================================================== */
+
+/* Fullscreen Toolbar Button */
+.tb-btn.highlight-fullscreen {
+  color: #38bdf8;
+}
+
+.tb-btn.highlight-fullscreen:hover {
+  background: rgba(56, 189, 248, 0.2);
+  color: #7dd3fc;
+}
+
+/* Tablet Menu Drawer in Toolbar */
+.tablet-menu-drawer {
+  width: 320px;
+  max-height: 80vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 10px;
+  background: rgba(15, 23, 42, 0.96);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(56, 189, 248, 0.2);
+  border-radius: 12px;
+}
+
+.menu-section-header {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #38bdf8;
+  letter-spacing: 0.05em;
+  padding: 8px 10px 4px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 6px;
+}
+
+.menu-prop-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+}
+
+.menu-prop-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.menu-select {
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  outline: none;
+}
+
+/* iOS/Tablet Switch Toggle */
+.switch-toggle {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+}
+
+.switch-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.switch-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #334155;
+  transition: .2s;
+  border-radius: 20px;
+}
+
+.switch-slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .2s;
+  border-radius: 50%;
+}
+
+.switch-toggle input:checked + .switch-slider {
+  background-color: #0284c7;
+}
+
+.switch-toggle input:checked + .switch-slider:before {
+  transform: translateX(16px);
+}
+
+/* Step Unit Dropdown Control */
+.step-unit-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 2px 8px;
+  font-size: 11px;
+}
+
+.step-unit-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+.step-unit-select {
+  background: transparent;
+  border: none;
+  color: var(--accent-cyan);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  outline: none;
+}
+
+.step-unit-select option {
+  background: #0f172a;
+  color: #ffffff;
+}
+
+/* Compact Strip Summary Bar */
+.compact-strip-bar {
+  background: #070d18;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 6px 16px;
+}
+
+.compact-strip-bar .filmstrip-header-clean {
+  margin: 0;
+}
+
+.btn-open-gallery {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  border: 1px solid #38bdf8 !important;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.35);
+}
+
+.btn-open-gallery:hover {
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.6);
+  transform: translateY(-1px);
+}
+
+/* Frame Browser Modal Popup */
+.frame-browser-backdrop {
+  z-index: 1000;
+}
+
+.frame-browser-card {
+  width: 90vw;
+  max-width: 1050px;
+  max-height: 84vh;
+  display: flex;
+  flex-direction: column;
+  background: rgba(15, 23, 42, 0.98);
+  backdrop-filter: blur(24px);
+  border: 1.5px solid rgba(56, 189, 248, 0.4);
+  border-radius: 16px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85), 0 0 30px rgba(56, 189, 248, 0.25);
+  overflow: hidden;
+}
+
+.modal-header-titles h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 4px 0;
+}
+
+.modal-subtext {
+  font-size: 11px;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.modal-header-btns {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-modal-action {
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(30, 41, 59, 0.8);
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-modal-action:hover {
+  background: #334155;
+  border-color: #38bdf8;
+}
+
+.btn-modal-action.highlight {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  border-color: #38bdf8;
+}
+
+.frame-browser-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.empty-gallery-hint {
+  text-align: center;
+  padding: 40px 20px;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.fb-strip-group {
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.fb-strip-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.fb-strip-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.fb-strip-badge {
+  background: rgba(56, 189, 248, 0.2);
+  color: var(--accent-cyan);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.fb-strip-frames-grid {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 8px;
+}
+
+.fb-frame-card {
+  flex-shrink: 0;
+  width: 120px;
+  background: #020617;
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.fb-frame-card:hover {
+  border-color: #38bdf8;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5), 0 0 10px rgba(56, 189, 248, 0.3);
+}
+
+.fb-frame-card.active {
+  border-color: #38bdf8;
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.6);
+}
+
+.fb-frame-thumb-box {
+  width: 120px;
+  height: 68px;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.fb-frame-thumb-box canvas {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.fb-frame-meta {
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10px;
+  background: #090d16;
+}
+
+.fb-frame-num {
+  font-weight: 700;
+  color: #38bdf8;
+  font-family: var(--font-mono);
+}
+
+.fb-frame-time {
+  color: #94a3b8;
+  font-family: var(--font-mono);
+}
+
+/* ==========================================================================
+   Device Adaptation & Responsive System (PC ↔ Tablet)
+   ========================================================================== */
+
+/* Device Mode Toggle Button in Studio Toolbar */
+.tb-btn.highlight-device {
+  background: rgba(56, 189, 248, 0.08);
+  border-color: rgba(56, 189, 248, 0.3);
+  color: #7dd3fc;
+}
+
+.tb-btn.highlight-device:hover {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: #38bdf8;
+  color: #ffffff;
+}
+
+.tb-icon-text {
+  font-size: 15px;
+  line-height: 1;
+}
+
+/* Canvas Zero Distortion Guarantee */
+.canvas-stack {
+  position: relative;
+  display: block;
+  margin: auto;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+  touch-action: none !important;
+  user-select: none !important;
+}
+
+.canvas-stack canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+  touch-action: none !important;
+  user-select: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   1. Tablet Mode (Applied via .device-tablet or Auto Media Queries)
+   -------------------------------------------------------------------------- */
+.device-tablet .top-bar,
+.device-tablet .property-panel,
+.is-fullscreen .top-bar,
+.is-fullscreen .property-panel {
+  display: none !important;
+}
+
+.device-tablet .workspace-body,
+.is-fullscreen .workspace-body {
+  grid-template-columns: 1fr !important;
+}
+
+.device-tablet.app-container,
+.is-fullscreen.app-container {
+  grid-template-rows: 1fr 148px !important;
+}
+
+.device-tablet .stage-viewport,
+.is-fullscreen .stage-viewport {
+  padding: 10px !important;
+}
+
+/* Touch-optimized button targets on Tablet */
+.device-tablet .studio-toolbar,
+.is-fullscreen .studio-toolbar {
+  padding: 6px 12px;
+  gap: 6px;
+}
+
+.device-tablet .tb-btn,
+.is-fullscreen .tb-btn {
+  min-height: 40px;
+  padding: 6px 12px;
+  font-size: 12.5px;
+}
+
+.device-tablet .tb-icon,
+.is-fullscreen .tb-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.device-tablet .timeline-dock,
+.is-fullscreen .timeline-dock {
+  padding: 4px 12px 8px 12px !important;
+}
+
+.device-tablet .transport-btn,
+.is-fullscreen .transport-btn {
+  min-height: 38px;
+  padding: 6px 14px;
+  font-size: 12.5px;
+}
+
+.device-tablet .step-unit-control,
+.is-fullscreen .step-unit-control {
+  height: 38px;
+  padding: 2px 10px;
+}
+
+.device-tablet .step-unit-select,
+.is-fullscreen .step-unit-select {
+  font-size: 12.5px;
+}
+
+/* --------------------------------------------------------------------------
+   2. PC / Desktop Mode (Applied via .device-pc)
+   -------------------------------------------------------------------------- */
+.device-pc:not(.is-fullscreen) .top-bar {
+  display: flex !important;
+}
+
+.device-pc:not(.is-fullscreen) .property-panel {
+  display: flex !important;
+}
+
+.device-pc:not(.is-fullscreen) .workspace-body {
+  grid-template-columns: 1fr 310px !important;
+}
+
+.device-pc:not(.is-fullscreen).app-container {
+  grid-template-rows: 56px 1fr 240px !important;
+}
+
+/* --------------------------------------------------------------------------
+   3. Auto Media Queries (When not explicitly forced by .device-pc)
+   -------------------------------------------------------------------------- */
+@media (max-width: 1024px), (hover: none) and (pointer: coarse) {
+  body:not(.device-pc) .top-bar,
+  body:not(.device-pc) .property-panel {
+    display: none !important;
+  }
+
+  body:not(.device-pc) .workspace-body {
+    grid-template-columns: 1fr !important;
+  }
+
+  body:not(.device-pc) .app-container {
+    grid-template-rows: 1fr 148px !important;
+  }
+
+  body:not(.device-pc) .stage-viewport {
+    padding: 10px !important;
+  }
+
+  body:not(.device-pc) .studio-toolbar {
+    padding: 6px 10px;
+    gap: 5px;
+  }
+
+  body:not(.device-pc) .tb-btn {
+    min-height: 40px;
+    padding: 6px 11px;
+    font-size: 12px;
+  }
+
+  body:not(.device-pc) .transport-btn {
+    min-height: 38px;
+    padding: 6px 12px;
+  }
+
+  body:not(.device-pc) .step-unit-control {
+    height: 38px;
+  }
+}
+
+/* Mobile & Narrow Screen Support (<= 768px) */
+@media (max-width: 768px) {
+  .transport-bar {
+    gap: 6px;
+    padding: 6px 8px;
+    justify-content: space-between;
+  }
+
+  .timecode-display {
+    font-size: 10px;
+    gap: 8px;
+  }
+
+  .timeline-extra-controls {
+    display: none;
+  }
+
+  .compact-strip-bar {
+    padding: 4px 8px;
+  }
+
+  .btn-open-gallery {
+    font-size: 11px !important;
+    padding: 4px 10px !important;
+  }
+}

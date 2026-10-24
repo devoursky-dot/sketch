@@ -96,10 +96,27 @@
                 </svg>
                 <span class="tb-label">메뉴</span>
               </button>
-              <!-- Hidden Menu Dropdown -->
-              <div id="dropdownMoreMenu" class="tb-dropdown-panel" style="display: none;">
+              <!-- Hidden Menu Dropdown (Tablet Full Studio Drawer) -->
+              <div id="dropdownMoreMenu" class="tb-dropdown-panel tablet-menu-drawer" style="display: none;">
+                <!-- Section 0: Device Optimization Mode (PC / Tablet) -->
+                <div class="menu-section-header">📱 기기 화면 최적화</div>
+                <div class="menu-prop-row">
+                  <div class="menu-prop-label">
+                    <span>작업 환경 모드:</span>
+                    <select id="selDeviceMode" class="menu-select">
+                      <option value="auto" selected>🔄 자동 감지 (권장)</option>
+                      <option value="pc">💻 컴퓨터 (PC) 모드</option>
+                      <option value="tablet">📱 태블릿 모드 (전면 캔버스)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="dd-divider"></div>
+
+                <!-- Section 1: File & Project -->
+                <div class="menu-section-header">📁 파일 & 프로젝트</div>
                 <div class="dd-item" id="menuItemOpenVideo">
-                  <span class="dd-icon">📁</span>
+                  <span class="dd-icon">📂</span>
                   <div class="dd-info">
                     <span class="dd-title">동영상 파일 열기</span>
                     <span class="dd-sub">MP4/WebM 비디오 불러오기</span>
@@ -112,22 +129,20 @@
                     <span class="dd-sub">24FPS 액션 영상 즉시 로드</span>
                   </div>
                 </div>
-                <div class="dd-divider"></div>
-                <div class="dd-item" id="menuItemToggleSolo">
-                  <span class="dd-icon">🎨</span>
+                <div class="dd-item" id="menuItemExportVideo">
+                  <span class="dd-icon">🎥</span>
                   <div class="dd-info">
-                    <span class="dd-title" id="menuSoloLabel">단독 애니메이션 보기</span>
-                    <span class="dd-sub">비디오 배경 숨김 / 표시 전환</span>
+                    <span class="dd-title">애니메이션 비디오(.mp4/.webm) 저장</span>
+                    <span class="dd-sub">동영상 파일로 인코딩 저장</span>
                   </div>
                 </div>
-                <div class="dd-item" id="menuItemToggleOnion">
-                  <span class="dd-icon">🧅</span>
+                <div class="dd-item" id="menuItemExportSequence">
+                  <span class="dd-icon">📁</span>
                   <div class="dd-info">
-                    <span class="dd-title">어니언 스킨 토글</span>
-                    <span class="dd-sub">이전/다음 프레임 잔상 표시 (단축키: O)</span>
+                    <span class="dd-title">PNG 시퀀스 다운로드</span>
+                    <span class="dd-sub">모든 키프레임 개별 압축 저장</span>
                   </div>
                 </div>
-                <div class="dd-divider"></div>
                 <div class="dd-item" id="menuItemExportFrame">
                   <span class="dd-icon">🖼️</span>
                   <div class="dd-info">
@@ -135,21 +150,70 @@
                     <span class="dd-sub">그린 그림 단일 이미지 저장</span>
                   </div>
                 </div>
-                <div class="dd-item" id="menuItemExportSequence">
-                  <span class="dd-icon">📁</span>
-                  <div class="dd-info">
-                    <span class="dd-title">PNG 시퀀스 다운로드</span>
-                    <span class="dd-sub">모든 키프레임 개별 저장</span>
-                  </div>
-                </div>
-                <div class="dd-item" id="menuItemExportVideo">
-                  <span class="dd-icon">🎥</span>
-                  <div class="dd-info">
-                    <span class="dd-title">애니메이션 비디오(.webm) 저장</span>
-                    <span class="dd-sub">동영상 파일로 인코딩 저장</span>
-                  </div>
-                </div>
+
                 <div class="dd-divider"></div>
+
+                <!-- Section 2: Video Tracing Layer (From Right Panel) -->
+                <div class="menu-section-header">📹 비디오 트레이싱 레이어</div>
+                <div class="menu-prop-row">
+                  <div class="menu-prop-label">
+                    <span>비디오 배경 보이기</span>
+                    <label class="switch-toggle">
+                      <input type="checkbox" id="menuChkShowVideo" checked>
+                      <span class="switch-slider"></span>
+                    </label>
+                  </div>
+                </div>
+                <div class="menu-prop-row">
+                  <div class="menu-prop-label">
+                    <span>비디오 투명도</span>
+                    <span id="menuVideoOpacityVal" class="opt-val">50%</span>
+                  </div>
+                  <input type="range" id="menuVideoOpacitySlider" min="0" max="100" value="50">
+                </div>
+
+                <div class="dd-divider"></div>
+
+                <!-- Section 3: Animation & Onion Skin -->
+                <div class="menu-section-header">🎬 애니메이션 & 어니언 스킨</div>
+                <div class="dd-item" id="menuItemToggleSolo">
+                  <span class="dd-icon">🎨</span>
+                  <div class="dd-info">
+                    <span class="dd-title" id="menuSoloLabel">단독 애니메이션 보기</span>
+                    <span class="dd-sub">비디오 배경 숨김 / 스케치 집중</span>
+                  </div>
+                </div>
+                <div class="dd-item" id="menuItemToggleOnion">
+                  <span class="dd-icon">🧅</span>
+                  <div class="dd-info">
+                    <span class="dd-title">어니언 스킨 토글</span>
+                    <span class="dd-sub">이전(빨강)/다음(파랑) 잔상 표시 (O)</span>
+                  </div>
+                </div>
+                <div class="menu-prop-row">
+                  <div class="menu-prop-label">
+                    <span title="체크 시 다음 키프레임까지 그림이 화면에 유지됩니다 (애니메이션 표준)">그림 유지 (다음 키프레임까지 지속)</span>
+                    <label class="switch-toggle">
+                      <input type="checkbox" id="menuChkHoldDrawing" checked>
+                      <span class="switch-slider"></span>
+                    </label>
+                  </div>
+                </div>
+                <div class="menu-prop-row">
+                  <div class="menu-prop-label">
+                    <span>애니메이션 FPS:</span>
+                    <select id="menuFpsSelect" class="menu-select">
+                      <option value="12">12 FPS</option>
+                      <option value="24" selected>24 FPS (영화)</option>
+                      <option value="30">30 FPS (웹)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="dd-divider"></div>
+
+                <!-- Section 4: Edit & History -->
+                <div class="menu-section-header">↩️ 편집 & 기록</div>
                 <div class="dd-item" id="btnUndo">
                   <span class="dd-icon">↩️</span>
                   <div class="dd-info">
@@ -252,7 +316,30 @@
                 <path d="M3 16v3a2 2 0 0 0 2 2h3"></path>
                 <path d="M16 21h3a2 2 0 0 0 2-2v-3"></path>
               </svg>
-              <span class="tb-label">전체보기</span>
+              <span class="tb-label">화면맞춤</span>
+            </button>
+
+            <!-- 10. 전체화면 실행 (태블릿/F11 전면 화면) -->
+            <button id="btnToggleFullscreen" class="tb-btn highlight-fullscreen" title="전체화면 전환 (F11)&#10;앱과 브라우저를 전체화면으로 실행하여 캔버스 작업 공간을 극대화합니다.">
+              <svg id="iconFsEnter" class="tb-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 8V5a2 2 0 0 1 2-2h3"></path>
+                <path d="M21 8V5a2 2 0 0 0-2-2h-3"></path>
+                <path d="M3 16v3a2 2 0 0 0 2 2h3"></path>
+                <path d="M21 16v3a2 2 0 0 1-2 2h-3"></path>
+              </svg>
+              <svg id="iconFsExit" class="tb-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                <path d="M8 3v3a2 2 0 0 1-2 2H3"></path>
+                <path d="M21 8h-3a2 2 0 0 1-2-2V3"></path>
+                <path d="M3 16h3a2 2 0 0 1 2 2v3"></path>
+                <path d="M16 21v-3a2 2 0 0 1 2-2h3"></path>
+              </svg>
+              <span class="tb-label" id="lblFullscreen">전체화면</span>
+            </button>
+
+            <!-- 11. 기기 모드 전환 (PC ↔ 태블릿) -->
+            <button id="btnDeviceModeToggle" class="tb-btn highlight-device" title="기기 환경 전환 (컴퓨터 PC ↔ 태블릿)&#10;현재 화면 환경에 맞추어 레이아웃과 도구를 최적화합니다.&#10;클릭 시 자동 감지 / 태블릿 모드 / PC 모드로 순환 전환됩니다.">
+              <span id="deviceModeIcon" class="tb-icon-text">🔄</span>
+              <span id="deviceModeLabel" class="tb-label">자동 모드</span>
             </button>
 
             <div class="tb-sep"></div>
@@ -433,40 +520,30 @@
     <footer class="timeline-dock">
       <!-- Transport Control Bar -->
       <div class="transport-bar">
-        <div class="transport-buttons">
+        <div class="transport-buttons tablet-transport">
           <!-- Play / Pause Toggle Button -->
           <button id="btnPlayPause" class="transport-btn primary" title="동영상 재생 / 일시정지 (Space)">
             <span id="playPauseIcon" class="t-icon">▶</span>
             <span id="playPauseText">재생</span>
           </button>
 
-          <!-- 1프레임 이동 (뒤로 / 앞으로 나란히 배치) -->
-          <div class="transport-pair-group" title="1프레임 단위 이동 (단축키: [ 또는 ← / ] 또는 →)">
-            <button id="btnPrevFrame" class="transport-btn pair-left" title="1프레임 뒤로 이동 (← 또는 [ )">
-              <span class="t-icon">◀</span> -1프레임
-            </button>
-            <button id="btnNextFrame" class="transport-btn pair-right" title="1프레임 앞으로 이동 (→ 또는 ] )">
-              +1프레임 <span class="t-icon">▶</span>
-            </button>
+          <!-- Step Unit Selector Dropdown (1프레임, 5프레임, 1초) -->
+          <div class="step-unit-control" title="프레임 이동 단위 선택">
+            <span class="step-unit-label">이동:</span>
+            <select id="selStepUnit" class="step-unit-select">
+              <option value="1" selected>1프레임</option>
+              <option value="5">5프레임</option>
+              <option value="1s">1초</option>
+            </select>
           </div>
 
-          <!-- 5프레임 이동 (뒤로 / 앞으로 나란히 배치) -->
-          <div class="transport-pair-group" title="5프레임 단위 이동 (단축키: Shift + [ 또는 Shift + ← / Shift + ] 또는 Shift + →)">
-            <button id="btnPrev5Frame" class="transport-btn pair-left" title="5프레임 뒤로 이동 (Shift + ←)">
-              <span class="t-icon">⏪</span> -5프레임
+          <!-- Step Backward / Forward Pair -->
+          <div class="transport-pair-group" title="선택한 단위로 앞/뒤 이동">
+            <button id="btnStepBack" class="transport-btn pair-left" title="선택한 단위만큼 뒤로 이동 (← 또는 [ )">
+              <span class="t-icon">◀</span> 이전
             </button>
-            <button id="btnNext5Frame" class="transport-btn pair-right" title="5프레임 앞으로 이동 (Shift + →)">
-              +5프레임 <span class="t-icon">⏩</span>
-            </button>
-          </div>
-
-          <!-- 1초 이동 (뒤로 / 앞으로 나란히 배치) -->
-          <div class="transport-pair-group" title="1초 단위 이동 (단축키: Ctrl + ← / Ctrl + →)">
-            <button id="btnJumpBack1s" class="transport-btn pair-left" title="1초 뒤로 이동 (Ctrl + ←)">
-              <span class="t-icon">⏮</span> -1초
-            </button>
-            <button id="btnJumpForward1s" class="transport-btn pair-right" title="1초 앞으로 이동 (Ctrl + →)">
-              +1초 <span class="t-icon">⏭</span>
+            <button id="btnStepForward" class="transport-btn pair-right" title="선택한 단위만큼 앞으로 이동 (→ 또는 ] )">
+              다음 <span class="t-icon">▶</span>
             </button>
           </div>
 
@@ -538,37 +615,59 @@
         </div>
       </div>
 
-      <!-- Bottom: Strips & Drawn Keyframe Thumbnails Dock (Pure Drawings, Grouped by Strip) -->
-      <div class="filmstrip-container" id="filmstripContainer">
+      <!-- Compact Strip Summary Bar (Tablet Optimized) -->
+      <div class="filmstrip-container compact-strip-bar" id="filmstripContainer">
         <div class="filmstrip-header-clean">
           <div class="filmstrip-header-left">
             <span class="filmstrip-clean-title">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-              내가 그린 키프레임 & 스트립 목록
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+              스트립 & 키프레임
             </span>
             <span id="stripCountBadge" class="strip-count-pill" title="등록된 스트립 개수">0개 스트립</span>
             <span id="filmstripCountBadge" class="filmstrip-count">0개 프레임</span>
           </div>
 
           <div class="strip-header-actions">
+            <!-- 프레임 갤러리 팝업창 열기 버튼 -->
+            <button id="btnOpenFrameBrowser" class="btn-strip-header-tool btn-open-gallery" title="그린 프레임 목록을 스크롤 가능한 팝업 갤러리로 열어 확인하고 이동합니다">
+              <span class="btn-icon">🖼️</span> 프레임 갤러리 열기
+            </button>
             <!-- 새 스트립 준비 버튼 -->
-            <button id="btnNewStrip" class="btn-strip-header-tool" title="새로운 스트립 번호를 준비합니다. 빈 프레임에 그리면 해당 프레임부터 새 스트립이 시작됩니다.">
+            <button id="btnNewStrip" class="btn-strip-header-tool" title="새로운 스트립 번호를 준비합니다">
               <span class="btn-icon">➕</span> 새 스트립
             </button>
-            <!-- 전체 스트립 연속 재생 버튼 (빈구간 스킵) -->
-            <button id="btnPlayAllStrips" class="btn-strip-header-tool btn-play-all-strips" title="비디오는 끄고 오직 내가 그린 손그림들만 빈 구간을 건너뛰고 연속 재생합니다.">
+            <!-- 전체 스트립 연속 재생 버튼 -->
+            <button id="btnPlayAllStrips" class="btn-strip-header-tool btn-play-all-strips" title="오직 내가 그린 손그림들만 빈 구간을 건너뛰고 연속 재생합니다">
               <span class="icon-play-all">⏩</span>
               <span class="lbl-play-all">전체 스트립 재생</span>
             </button>
           </div>
         </div>
 
-        <!-- Strip Groups & Frame Thumbnails Container -->
-        <div class="filmstrip-scroll" id="filmstripScroll">
-          <div class="filmstrip-placeholder">✏️ 비디오 위에 그림을 그리면 스트립 구간과 내가 그린 순수 그림 썸네일들이 정렬되어 표시됩니다.</div>
-        </div>
+        <!-- Hidden container kept in DOM for engine compatibility -->
+        <div class="filmstrip-scroll" id="filmstripScroll" style="display: none;"></div>
       </div>
     </footer>
+  </div>
+
+  <!-- Scrollable Frame Browser Modal (Tablet-Friendly Frame Gallery) -->
+  <div id="frameBrowserModal" class="modal-backdrop frame-browser-backdrop" style="display: none;">
+    <div class="modal-card frame-browser-card">
+      <div class="modal-header">
+        <div class="modal-header-titles">
+          <h3>🎞️ 그린 프레임 & 스트립 갤러리</h3>
+          <p class="modal-subtext">원하는 프레임 썸네일을 터치/클릭하면 해당 프레임으로 즉시 이동합니다.</p>
+        </div>
+        <div class="modal-header-btns">
+          <button id="btnModalNewStrip" class="btn btn-secondary">➕ 새 스트립</button>
+          <button id="btnModalPlayAll" class="btn btn-mode">⏩ 전체 재생</button>
+          <button id="btnCloseFrameBrowser" class="btn-modal-close" title="닫기">&times;</button>
+        </div>
+      </div>
+      <div class="frame-browser-content" id="frameBrowserContent">
+        <div class="empty-gallery-hint">✏️ 아직 그려진 키프레임이 없습니다. 비디오 위에 그림을 그려보세요!</div>
+      </div>
+    </div>
   </div>
 
   <!-- Strip Delete Confirmation Modal -->

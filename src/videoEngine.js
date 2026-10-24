@@ -222,7 +222,31 @@ export class VideoEngine {
   drawFrame(ctx, width, height) {
     if (!this.isLoaded || !this.video) return;
     try {
-      ctx.drawImage(this.video, 0, 0, width, height);
+      const vWidth = this.video.videoWidth || width;
+      const vHeight = this.video.videoHeight || height;
+      if (!vWidth || !vHeight) {
+        ctx.drawImage(this.video, 0, 0, width, height);
+        return;
+      }
+
+      const videoAspect = vWidth / vHeight;
+      const targetAspect = width / height;
+
+      // If aspect ratios match within 0.5%, draw directly
+      if (Math.abs(videoAspect - targetAspect) < 0.005) {
+        ctx.drawImage(this.video, 0, 0, width, height);
+      } else {
+        // Aspect-fit letterbox/pillarbox to strictly prevent any squishing or stretching
+        let renderW = width;
+        let renderH = width / videoAspect;
+        if (renderH > height) {
+          renderH = height;
+          renderW = height * videoAspect;
+        }
+        const offsetX = (width - renderW) / 2;
+        const offsetY = (height - renderH) / 2;
+        ctx.drawImage(this.video, offsetX, offsetY, renderW, renderH);
+      }
     } catch (e) {
       console.warn('Video render error:', e);
     }

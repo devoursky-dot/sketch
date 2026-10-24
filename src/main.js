@@ -55,6 +55,16 @@ class RotoSketchApp {
     this.viewportEngine = new ViewportEngine(this.canvasStack, this.stageViewport);
 
     this._setupCanvases();
+    this._initDeviceMode();
+    this._fitCanvasToWindow();
+    window.addEventListener('resize', () => {
+      if (this.deviceMode === 'auto') {
+        this._applyDeviceMode('auto');
+      }
+      this._fitCanvasToWindow();
+    });
+    document.addEventListener('fullscreenchange', () => this._updateFullscreenUI());
+
     this._bindEngineCallbacks();
     this._bindUIEvents();
     this._bindKeyboardShortcuts();
@@ -158,21 +168,45 @@ class RotoSketchApp {
     this.chkHoldDrawing = document.getElementById('chkHoldDrawing');
     this.stageModeBadge = document.getElementById('stageModeBadge');
 
-    // Transport
+    this.app = document.getElementById('app');
+
+    // Tablet & Fullscreen Controls
+    this.btnToggleFullscreen = document.getElementById('btnToggleFullscreen');
+    this.iconFsEnter = document.getElementById('iconFsEnter');
+    this.iconFsExit = document.getElementById('iconFsExit');
+    this.lblFullscreen = document.getElementById('lblFullscreen');
+
+    // Device Adaptation Mode (Auto / PC / Tablet)
+    this.btnDeviceModeToggle = document.getElementById('btnDeviceModeToggle');
+    this.deviceModeIcon = document.getElementById('deviceModeIcon');
+    this.deviceModeLabel = document.getElementById('deviceModeLabel');
+    this.selDeviceMode = document.getElementById('selDeviceMode');
+    this.deviceMode = localStorage.getItem('rotosketch_device_mode') || 'auto';
+
+    // Transport (Dropdown + Single Pair)
     this.btnPlayPause = document.getElementById('btnPlayPause');
     this.playPauseIcon = document.getElementById('playPauseIcon');
     this.playPauseText = document.getElementById('playPauseText');
-
-    // Paired frame navigation buttons
-    this.btnPrevFrame = document.getElementById('btnPrevFrame');
-    this.btnNextFrame = document.getElementById('btnNextFrame');
-    this.btnPrev5Frame = document.getElementById('btnPrev5Frame');
-    this.btnNext5Frame = document.getElementById('btnNext5Frame');
-    this.btnJumpBack1s = document.getElementById('btnJumpBack1s');
-    this.btnJumpForward1s = document.getElementById('btnJumpForward1s');
-
+    this.selStepUnit = document.getElementById('selStepUnit');
+    this.btnStepBack = document.getElementById('btnStepBack');
+    this.btnStepForward = document.getElementById('btnStepForward');
     this.btnPlayKeyframesTransport = document.getElementById('btnPlayKeyframesTransport');
     this.chkLoop = document.getElementById('chkLoop');
+
+    // Frame Browser Modal (Tablet Frame Gallery)
+    this.btnOpenFrameBrowser = document.getElementById('btnOpenFrameBrowser');
+    this.btnCloseFrameBrowser = document.getElementById('btnCloseFrameBrowser');
+    this.frameBrowserModal = document.getElementById('frameBrowserModal');
+    this.frameBrowserContent = document.getElementById('frameBrowserContent');
+    this.btnModalNewStrip = document.getElementById('btnModalNewStrip');
+    this.btnModalPlayAll = document.getElementById('btnModalPlayAll');
+
+    // Menu Drawer Toggles (Tablet Mode Controls)
+    this.menuChkShowVideo = document.getElementById('menuChkShowVideo');
+    this.menuVideoOpacitySlider = document.getElementById('menuVideoOpacitySlider');
+    this.menuVideoOpacityVal = document.getElementById('menuVideoOpacityVal');
+    this.menuChkHoldDrawing = document.getElementById('menuChkHoldDrawing');
+    this.menuFpsSelect = document.getElementById('menuFpsSelect');
 
     // Speed & Pure Animation Controls
     this.playbackSpeed = 1.0;
@@ -242,6 +276,21 @@ class RotoSketchApp {
     this.videoEngine.onLoaded = ({ totalFrames, duration, width, height }) => {
       this.displayTotalFrames.innerText = totalFrames;
       this.displayTotalDuration.innerText = this._formatTime(duration);
+      if (width && height) {
+        this.width = width;
+        this.height = height;
+        [this.videoCanvas, this.onionCanvas, this.drawingCanvas, this.overlayCanvas].forEach(c => {
+          if (c) {
+            c.width = this.width;
+            c.height = this.height;
+          }
+        });
+        if (this.keyframeEngine) {
+          this.keyframeEngine.width = this.width;
+          this.keyframeEngine.height = this.height;
+        }
+      }
+      this._fitCanvasToWindow();
       this._buildTimelineRuler(totalFrames);
       this._updatePlayhead(0);
       this._renderCurrentFrameToCanvas();
@@ -690,30 +739,96 @@ class RotoSketchApp {
       }
     });
 
-    // 7. Transport Controls (Play Toggle & Ergonomic Paired Frame Step Buttons)
+    // 7. Transport Controls (Play Toggle & Step Unit Navigation)
     if (this.btnPlayPause) {
       this.btnPlayPause.addEventListener('click', () => this._togglePlay());
     }
-    // 1-frame step pair
-    if (this.btnPrevFrame) {
-      this.btnPrevFrame.addEventListener('click', () => this.videoEngine.stepFrame(-1));
+    if (this.btnStepBack) {
+      this.btnStepBack.addEventListener('click', () => this._stepBySelectedUnit(-1));
     }
-    if (this.btnNextFrame) {
-      this.btnNextFrame.addEventListener('click', () => this.videoEngine.stepFrame(1));
+    if (this.btnStepForward) {
+      this.btnStepForward.addEventListener('click', () => this._stepBySelectedUnit(1));
     }
-    // 5-frame step pair
-    if (this.btnPrev5Frame) {
-      this.btnPrev5Frame.addEventListener('click', () => this.videoEngine.stepFrame(-5));
+
+    // Tablet Fullscreen Toggle
+    if (this.btnToggleFullscreen) {
+      this.btnToggleFullscreen.addEventListener('click', () => this._toggleFullscreen());
     }
-    if (this.btnNext5Frame) {
-      this.btnNext5Frame.addEventListener('click', () => this.videoEngine.stepFrame(5));
+
+    // Device Mode Switching (PC ↔ Tablet)
+    if (this.btnDeviceModeToggle) {
+      this.btnDeviceModeToggle.addEventListener('click', () => this._cycleDeviceMode());
     }
-    // 1-second jump pair
-    if (this.btnJumpBack1s) {
-      this.btnJumpBack1s.addEventListener('click', () => this.videoEngine.jumpSeconds(-1.0));
+    if (this.selDeviceMode) {
+      this.selDeviceMode.addEventListener('change', (e) => this._setDeviceMode(e.target.value));
     }
-    if (this.btnJumpForward1s) {
-      this.btnJumpForward1s.addEventListener('click', () => this.videoEngine.jumpSeconds(1.0));
+
+    // Frame Browser Modal (Popup Gallery)
+    if (this.btnOpenFrameBrowser) {
+      this.btnOpenFrameBrowser.addEventListener('click', () => this._openFrameBrowser());
+    }
+    if (this.btnCloseFrameBrowser) {
+      this.btnCloseFrameBrowser.addEventListener('click', () => this._closeFrameBrowser());
+    }
+    if (this.frameBrowserModal) {
+      this.frameBrowserModal.addEventListener('click', (e) => {
+        if (e.target === this.frameBrowserModal) this._closeFrameBrowser();
+      });
+    }
+    if (this.btnModalNewStrip) {
+      this.btnModalNewStrip.addEventListener('click', () => {
+        this._createNewStrip();
+        this._renderFrameBrowserModal();
+      });
+    }
+    if (this.btnModalPlayAll) {
+      this.btnModalPlayAll.addEventListener('click', () => {
+        this._closeFrameBrowser();
+        this._toggleAllStripsPlayback();
+      });
+    }
+
+    // Menu Drawer Settings Synchronization
+    if (this.menuChkShowVideo) {
+      this.menuChkShowVideo.addEventListener('change', (e) => {
+        this.showVideo = e.target.checked;
+        if (this.chkShowVideo) this.chkShowVideo.checked = this.showVideo;
+        if (!this.soloAnimationMode) {
+          this.videoCanvas.style.opacity = this.showVideo ? this.videoOpacity : '0';
+        }
+      });
+    }
+
+    if (this.menuVideoOpacitySlider) {
+      this.menuVideoOpacitySlider.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value, 10);
+        this.videoOpacity = val / 100;
+        if (this.videoOpacitySlider) this.videoOpacitySlider.value = val;
+        if (this.videoOpacityVal) this.videoOpacityVal.innerText = `${val}%`;
+        if (this.menuVideoOpacityVal) this.menuVideoOpacityVal.innerText = `${val}%`;
+        if (!this.soloAnimationMode && this.showVideo) {
+          this.videoCanvas.style.opacity = this.videoOpacity;
+        }
+      });
+    }
+
+    if (this.menuChkHoldDrawing) {
+      this.menuChkHoldDrawing.addEventListener('change', (e) => {
+        const checked = e.target.checked;
+        if (this.chkHoldDrawing) this.chkHoldDrawing.checked = checked;
+        this.keyframeEngine.setHoldDrawing(checked);
+        this._syncDrawingLayerForFrame(this.videoEngine.currentFrame, false);
+      });
+    }
+
+    if (this.menuFpsSelect) {
+      this.menuFpsSelect.addEventListener('change', (e) => {
+        const fps = parseInt(e.target.value, 10);
+        if (this.fpsSelect) this.fpsSelect.value = fps;
+        this.fps = fps;
+        this.videoEngine.setFPS(fps);
+        this._buildTimelineRuler(this.videoEngine.totalFrames);
+      });
     }
 
     // 8. Timeline Track Scrubbing & Live Thumbnail Hover Card
@@ -910,18 +1025,21 @@ class RotoSketchApp {
         e.preventDefault();
         if (e.ctrlKey) this.videoEngine.jumpSeconds(-1.0);
         else if (e.shiftKey) this.videoEngine.stepFrame(-5);
-        else this.videoEngine.stepFrame(-1);
+        else this._stepBySelectedUnit(-1);
       } else if (e.code === 'ArrowRight') {
         e.preventDefault();
         if (e.ctrlKey) this.videoEngine.jumpSeconds(1.0);
         else if (e.shiftKey) this.videoEngine.stepFrame(5);
-        else this.videoEngine.stepFrame(1);
+        else this._stepBySelectedUnit(1);
       } else if (e.code === 'BracketLeft') {
         if (e.shiftKey) this.videoEngine.stepFrame(-5);
-        else this.videoEngine.stepFrame(-1);
+        else this._stepBySelectedUnit(-1);
       } else if (e.code === 'BracketRight') {
         if (e.shiftKey) this.videoEngine.stepFrame(5);
-        else this.videoEngine.stepFrame(1);
+        else this._stepBySelectedUnit(1);
+      } else if (e.key === 'F11') {
+        e.preventDefault();
+        this._toggleFullscreen();
       } else if (e.key === 'b' || e.key === 'B') {
         this._setTool('brush');
       } else if (e.key === 'e' || e.key === 'E') {
@@ -2051,6 +2169,245 @@ class RotoSketchApp {
       a.download = `rotosketch_seq_${String(f).padStart(4, '0')}.png`;
       a.href = kf.toDataURL('image/png');
       a.click();
+    }
+  }
+
+  // ==========================================================================
+  // Device Adaptation, Zero Distortion Fit, Fullscreen, and Tablet Gallery
+  // ==========================================================================
+
+  _initDeviceMode() {
+    this._applyDeviceMode(this.deviceMode || 'auto');
+  }
+
+  _cycleDeviceMode() {
+    const modes = ['auto', 'tablet', 'pc'];
+    const current = this.deviceMode || 'auto';
+    const nextIdx = (modes.indexOf(current) + 1) % modes.length;
+    this._setDeviceMode(modes[nextIdx]);
+  }
+
+  _setDeviceMode(mode) {
+    this.deviceMode = mode;
+    localStorage.setItem('rotosketch_device_mode', mode);
+    this._applyDeviceMode(mode);
+  }
+
+  _applyDeviceMode(mode) {
+    let isTablet = false;
+    let label = '자동 모드';
+    let icon = '🔄';
+
+    if (mode === 'tablet') {
+      isTablet = true;
+      label = '태블릿 모드';
+      icon = '📱';
+    } else if (mode === 'pc') {
+      isTablet = false;
+      label = 'PC 모드';
+      icon = '💻';
+    } else {
+      // Auto mode based on window width and coarse pointer
+      const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || window.matchMedia('(pointer: coarse)').matches;
+      const isSmall = window.innerWidth <= 1024;
+      isTablet = isSmall || (isTouch && window.innerWidth <= 1366);
+      label = isTablet ? '태블릿 (자동)' : 'PC (자동)';
+      icon = isTablet ? '📱' : '💻';
+    }
+
+    if (this.app) {
+      this.app.classList.toggle('device-tablet', isTablet);
+      this.app.classList.toggle('device-pc', !isTablet);
+    }
+
+    if (this.deviceModeIcon) {
+      this.deviceModeIcon.innerText = icon;
+    }
+    if (this.deviceModeLabel) {
+      this.deviceModeLabel.innerText = label;
+    }
+    if (this.selDeviceMode && this.selDeviceMode.value !== mode) {
+      this.selDeviceMode.value = mode;
+    }
+
+    setTimeout(() => this._fitCanvasToWindow(), 50);
+  }
+
+  _fitCanvasToWindow() {
+    if (!this.stageViewport || !this.canvasStack) return;
+    const isTablet = this.app ? this.app.classList.contains('device-tablet') : (window.innerWidth <= 1024);
+    const padding = isTablet ? 12 : 28;
+    const availW = Math.max(200, this.stageViewport.clientWidth - padding * 2);
+    const availH = Math.max(140, this.stageViewport.clientHeight - padding * 2);
+    const aspect = (this.width && this.height) ? (this.width / this.height) : (16 / 9);
+
+    let displayW = availW;
+    let displayH = displayW / aspect;
+
+    if (displayH > availH) {
+      displayH = availH;
+      displayW = displayH * aspect;
+    }
+
+    this.canvasStack.style.width = `${Math.round(displayW)}px`;
+    this.canvasStack.style.height = `${Math.round(displayH)}px`;
+    this.canvasStack.style.aspectRatio = `${aspect}`;
+  }
+
+  _toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+  }
+
+  _updateFullscreenUI() {
+    const isFs = !!document.fullscreenElement;
+    if (this.app) {
+      this.app.classList.toggle('is-fullscreen', isFs);
+    }
+    if (this.iconFsEnter && this.iconFsExit) {
+      this.iconFsEnter.style.display = isFs ? 'none' : 'block';
+      this.iconFsExit.style.display = isFs ? 'block' : 'none';
+    }
+    if (this.lblFullscreen) {
+      this.lblFullscreen.innerText = isFs ? '창모드' : '전체화면';
+    }
+    setTimeout(() => this._fitCanvasToWindow(), 120);
+  }
+
+  _stepBySelectedUnit(direction) {
+    const unit = this.selStepUnit ? this.selStepUnit.value : '1';
+    if (unit === '1s') {
+      this.videoEngine.jumpSeconds(direction * 1.0);
+    } else if (unit === '5') {
+      this.videoEngine.stepFrame(direction * 5);
+    } else {
+      this.videoEngine.stepFrame(direction * 1);
+    }
+  }
+
+  _openFrameBrowser() {
+    if (!this.frameBrowserModal) return;
+    this._renderFrameBrowserModal();
+    this.frameBrowserModal.style.display = 'flex';
+  }
+
+  _closeFrameBrowser() {
+    if (!this.frameBrowserModal) return;
+    this.frameBrowserModal.style.display = 'none';
+  }
+
+  _renderFrameBrowserModal() {
+    if (!this.frameBrowserContent) return;
+    const strips = this.stripEngine.getStrips();
+    const indices = this.keyframeEngine.getKeyframeIndices();
+
+    if (strips.length === 0 && indices.length === 0) {
+      this.frameBrowserContent.innerHTML = '<div class="empty-gallery-hint">✏️ 아직 그려진 키프레임이 없습니다. 비디오 위에 그림을 그려보세요!</div>';
+      return;
+    }
+
+    this.frameBrowserContent.innerHTML = '';
+    const currentFrame = this.videoEngine.currentFrame;
+
+    for (const strip of strips) {
+      const isPlayingThis = (this.isStripPlaying && this.playingStripId === strip.id);
+      const stripFrames = strip.getSortedFrames ? strip.getSortedFrames() : Array.from(strip.frameIndices || []).sort((a, b) => a - b);
+
+      const groupDiv = document.createElement('div');
+      groupDiv.className = 'fb-strip-group';
+      groupDiv.style.borderLeft = `4px solid ${strip.color || '#38bdf8'}`;
+
+      const headerDiv = document.createElement('div');
+      headerDiv.className = 'fb-strip-header';
+      headerDiv.innerHTML = `
+        <div class="fb-strip-info">
+          <span class="fb-strip-badge" style="background: ${strip.color}22; color: ${strip.color}; border-color: ${strip.color}55;">스트립 #${strip.id}</span>
+          <span style="font-size: 12px; font-weight: 600; color: #f8fafc;">${strip.startFrame !== null ? `${strip.startFrame}f ~ ${strip.endFrame}f` : '대기 중'}</span>
+          <span style="font-size: 11px; color: #94a3b8;">(${stripFrames.length}장)</span>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-modal-action btn-play-strip" title="이 스트립 구간만 루프 재생">
+            ${isPlayingThis ? '⏸ 정지' : '▶ 스트립 재생'}
+          </button>
+          <button class="btn-modal-action btn-del-strip" title="스트립 삭제" style="color: #f43f5e;">
+            🗑️ 삭제
+          </button>
+        </div>
+      `;
+
+      const playBtn = headerDiv.querySelector('.btn-play-strip');
+      if (playBtn) {
+        playBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this._toggleStripPlayback(strip.id);
+          this._renderFrameBrowserModal();
+        });
+      }
+
+      const delBtn = headerDiv.querySelector('.btn-del-strip');
+      if (delBtn) {
+        delBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this._openDeleteStripModal(strip.id);
+        });
+      }
+
+      groupDiv.appendChild(headerDiv);
+
+      const gridDiv = document.createElement('div');
+      gridDiv.className = 'fb-strip-frames-grid';
+
+      if (stripFrames.length === 0) {
+        gridDiv.innerHTML = '<span style="font-size: 11px; color: #64748b; padding: 10px;">그려진 키프레임 없음</span>';
+      } else {
+        for (const frame of stripFrames) {
+          const card = document.createElement('div');
+          card.className = `fb-frame-card ${frame === currentFrame ? 'active' : ''}`;
+          card.title = `프레임 #${frame} 선택`;
+
+          const thumbBox = document.createElement('div');
+          thumbBox.className = 'fb-frame-thumb-box';
+
+          const tCanvas = document.createElement('canvas');
+          tCanvas.width = 120;
+          tCanvas.height = 68;
+          const tCtx = tCanvas.getContext('2d');
+          tCtx.fillStyle = '#ffffff';
+          tCtx.fillRect(0, 0, 120, 68);
+
+          const kf = this.keyframeEngine.getKeyframe(frame);
+          if (kf) {
+            tCtx.drawImage(kf, 0, 0, 120, 68);
+          }
+          thumbBox.appendChild(tCanvas);
+          card.appendChild(thumbBox);
+
+          const meta = document.createElement('div');
+          meta.className = 'fb-frame-meta';
+          meta.innerHTML = `
+            <span class="fb-frame-num">#${frame}</span>
+            <span class="fb-frame-time">${this._formatTime(frame / this.fps)}</span>
+          `;
+          card.appendChild(meta);
+
+          card.addEventListener('click', () => {
+            this.videoEngine.seekFrame(frame);
+            this._closeFrameBrowser();
+          });
+
+          gridDiv.appendChild(card);
+        }
+      }
+
+      groupDiv.appendChild(gridDiv);
+      this.frameBrowserContent.appendChild(groupDiv);
     }
   }
 }
