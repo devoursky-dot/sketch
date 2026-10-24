@@ -91,14 +91,8 @@ class RotoSketchApp {
     // Header buttons
     this.videoFileInput = document.getElementById('videoFileInput');
     this.btnOpenVideo = document.getElementById('btnOpenVideo');
-    this.btnLoadSample = document.getElementById('btnLoadSample');
-    this.btnPlayKeyframesOnly = document.getElementById('btnPlayKeyframesOnly');
-    this.flipbookBtnText = document.getElementById('flipbookBtnText');
-    this.btnTogglePlaybackMode = document.getElementById('btnTogglePlaybackMode');
-    this.playbackModeLabel = document.getElementById('playbackModeLabel');
     this.btnToggleOnionSkin = document.getElementById('btnToggleOnionSkin');
     this.fpsSelect = document.getElementById('fpsSelect');
-    this.btnExportFrame = document.getElementById('btnExportFrame');
     this.btnExportSequence = document.getElementById('btnExportSequence');
 
     // Studio Toolbar & Viewport Controls
@@ -116,11 +110,7 @@ class RotoSketchApp {
 
     // Menu Dropdown Items
     this.menuItemOpenVideo = document.getElementById('menuItemOpenVideo');
-    this.menuItemLoadSample = document.getElementById('menuItemLoadSample');
-    this.menuItemToggleSolo = document.getElementById('menuItemToggleSolo');
-    this.menuSoloLabel = document.getElementById('menuSoloLabel');
     this.menuItemToggleOnion = document.getElementById('menuItemToggleOnion');
-    this.menuItemExportFrame = document.getElementById('menuItemExportFrame');
     this.menuItemExportSequence = document.getElementById('menuItemExportSequence');
     this.menuItemExportVideo = document.getElementById('menuItemExportVideo');
 
@@ -190,7 +180,6 @@ class RotoSketchApp {
     this.selStepUnit = document.getElementById('selStepUnit');
     this.btnStepBack = document.getElementById('btnStepBack');
     this.btnStepForward = document.getElementById('btnStepForward');
-    this.btnPlayKeyframesTransport = document.getElementById('btnPlayKeyframesTransport');
     this.chkLoop = document.getElementById('chkLoop');
 
     // Frame Browser Modal (Tablet Frame Gallery)
@@ -223,6 +212,7 @@ class RotoSketchApp {
     // Timeline Scrubber & Live Hover Card
     this.timelineTrackContainer = document.getElementById('timelineTrackContainer');
     this.timelineTrack = document.getElementById('timelineTrack');
+    this.timelineStripRanges = document.getElementById('timelineStripRanges');
     this.timelineRuler = document.getElementById('timelineRuler');
     this.timelinePlayhead = document.getElementById('timelinePlayhead');
     this.keyframeMarkers = document.getElementById('keyframeMarkers');
@@ -362,7 +352,7 @@ class RotoSketchApp {
   }
 
   _bindUIEvents() {
-    // 1. File & Sample Video Loading
+    // 1. File Loading
     this.btnOpenVideo.addEventListener('click', () => this.videoFileInput.click());
     this.videoFileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
@@ -372,10 +362,6 @@ class RotoSketchApp {
       }
     });
 
-    this.btnLoadSample.addEventListener('click', () => {
-      this.loadSampleVideo();
-    });
-
     // Keyframe Drawing Filmstrip: Drag-to-Scroll & Wheel Pan
     this._bindFilmstripDragScroll();
 
@@ -383,15 +369,8 @@ class RotoSketchApp {
     if (this.btnNewStrip) {
       this.btnNewStrip.addEventListener('click', () => {
         this._stopStripPlaybacks();
-        const newStrip = this.stripEngine.createNewStrip();
-        this.stageModeBadge.style.display = 'block';
-        this.stageModeBadge.innerText = `✨ ${newStrip.name} 준비 완료! (원하는 프레임으로 이동하여 그림을 그려보세요)`;
-        setTimeout(() => {
-          if (!this.isStripPlaying && !this.isAllStripsPlaying && !this.isPureAnimPlaying && !this.soloAnimationMode) {
-            this.stageModeBadge.style.display = 'none';
-          }
-        }, 3000);
-        this._renderKeyframeFilmstrip();
+        this.stripEngine.createNewStrip();
+        this._renderTimelineStripRanges();
       });
     }
 
@@ -424,11 +403,6 @@ class RotoSketchApp {
       });
     }
 
-    // Flipbook (Keyframes Only Playback)
-    const toggleFlipbook = () => this._toggleKeyframesOnlyPlayback();
-    if (this.btnPlayKeyframesOnly) this.btnPlayKeyframesOnly.addEventListener('click', toggleFlipbook);
-    if (this.btnPlayKeyframesTransport) this.btnPlayKeyframesTransport.addEventListener('click', toggleFlipbook);
-
     // Keyframe Hold Toggle
     if (this.chkHoldDrawing) {
       this.chkHoldDrawing.addEventListener('change', (e) => {
@@ -450,22 +424,6 @@ class RotoSketchApp {
     if (this.btnStartExportVideo) {
       this.btnStartExportVideo.addEventListener('click', () => this._startVideoExport());
     }
-
-    // 3. Playback Mode Toggle (Video Tracing vs Solo Animation)
-    this.btnTogglePlaybackMode.addEventListener('click', () => {
-      this.soloAnimationMode = !this.soloAnimationMode;
-      if (this.soloAnimationMode) {
-        this.btnTogglePlaybackMode.classList.add('active-solo');
-        this.playbackModeLabel.innerText = '비디오 트레이싱 보기';
-        this.stageModeBadge.style.display = 'block';
-        this.videoCanvas.style.opacity = '0';
-      } else {
-        this.btnTogglePlaybackMode.classList.remove('active-solo');
-        this.playbackModeLabel.innerText = '단독 애니메이션 보기';
-        this.stageModeBadge.style.display = 'none';
-        this.videoCanvas.style.opacity = this.showVideo ? this.videoOpacity : '0';
-      }
-    });
 
     // 3. Onion Skin Toggle
     this.btnToggleOnionSkin.addEventListener('click', () => {
@@ -493,7 +451,15 @@ class RotoSketchApp {
       this.btnMoreMenu.addEventListener('click', (e) => {
         e.stopPropagation();
         const isShown = this.dropdownMoreMenu.style.display !== 'none';
-        this.dropdownMoreMenu.style.display = isShown ? 'none' : 'flex';
+        if (isShown) {
+          this.dropdownMoreMenu.style.display = 'none';
+        } else {
+          const rect = this.btnMoreMenu.getBoundingClientRect();
+          this.dropdownMoreMenu.style.position = 'fixed';
+          this.dropdownMoreMenu.style.top = `${rect.bottom + 8}px`;
+          this.dropdownMoreMenu.style.left = `${Math.min(window.innerWidth - 340, Math.max(10, rect.left))}px`;
+          this.dropdownMoreMenu.style.display = 'flex';
+        }
         if (this.dropdownToolOptions) this.dropdownToolOptions.style.display = 'none';
       });
     }
@@ -502,7 +468,15 @@ class RotoSketchApp {
       this.btnToolOptions.addEventListener('click', (e) => {
         e.stopPropagation();
         const isShown = this.dropdownToolOptions.style.display !== 'none';
-        this.dropdownToolOptions.style.display = isShown ? 'none' : 'flex';
+        if (isShown) {
+          this.dropdownToolOptions.style.display = 'none';
+        } else {
+          const rect = this.btnToolOptions.getBoundingClientRect();
+          this.dropdownToolOptions.style.position = 'fixed';
+          this.dropdownToolOptions.style.top = `${rect.bottom + 8}px`;
+          this.dropdownToolOptions.style.left = `${Math.min(window.innerWidth - 320, Math.max(10, rect.right - 280))}px`;
+          this.dropdownToolOptions.style.display = 'flex';
+        }
         if (this.dropdownMoreMenu) this.dropdownMoreMenu.style.display = 'none';
       });
     }
@@ -528,28 +502,10 @@ class RotoSketchApp {
         this.videoFileInput.click();
       });
     }
-    if (this.menuItemLoadSample) {
-      this.menuItemLoadSample.addEventListener('click', () => {
-        this.dropdownMoreMenu.style.display = 'none';
-        this.loadSampleVideo();
-      });
-    }
-    if (this.menuItemToggleSolo) {
-      this.menuItemToggleSolo.addEventListener('click', () => {
-        this.dropdownMoreMenu.style.display = 'none';
-        this.btnTogglePlaybackMode.click();
-      });
-    }
     if (this.menuItemToggleOnion) {
       this.menuItemToggleOnion.addEventListener('click', () => {
         this.dropdownMoreMenu.style.display = 'none';
         this.btnToggleOnionSkin.click();
-      });
-    }
-    if (this.menuItemExportFrame) {
-      this.menuItemExportFrame.addEventListener('click', () => {
-        this.dropdownMoreMenu.style.display = 'none';
-        this._exportCurrentFrame();
       });
     }
     if (this.menuItemExportSequence) {
@@ -1611,6 +1567,11 @@ class RotoSketchApp {
       indices = this.keyframeEngine.getKeyframeIndices();
     }
 
+    this._renderTimelineStripRanges();
+    if (this.frameBrowserModal && this.frameBrowserModal.style.display !== 'none') {
+      this._renderFrameBrowserModal();
+    }
+
     const strips = this.stripEngine.getStrips();
 
     if (this.stripCountBadge) {
@@ -2292,6 +2253,39 @@ class RotoSketchApp {
     }
   }
 
+  _renderTimelineStripRanges() {
+    if (!this.timelineStripRanges) return;
+    this.timelineStripRanges.innerHTML = '';
+    const totalFrames = this.videoEngine.totalFrames || 1;
+    if (totalFrames <= 1) return;
+
+    const strips = this.stripEngine.getStrips();
+    for (const strip of strips) {
+      if (strip.startFrame === null || strip.endFrame === null) continue;
+      const count = strip.frameIndices ? strip.frameIndices.size : 0;
+      if (count === 0) continue;
+
+      const leftPct = (strip.startFrame / (totalFrames - 1)) * 100;
+      const rightPct = (strip.endFrame / (totalFrames - 1)) * 100;
+      const widthPct = Math.max(0.8, rightPct - leftPct);
+
+      const seg = document.createElement('div');
+      seg.className = 'timeline-strip-segment' + (strip.id === this.stripEngine.activeStripId ? ' active' : '');
+      seg.style.left = `${leftPct}%`;
+      seg.style.width = `${widthPct}%`;
+      seg.style.setProperty('--strip-color', strip.color);
+      seg.title = `${strip.name} (${strip.startFrame}f ~ ${strip.endFrame}f · 총 ${count}장) - 클릭하여 이동`;
+
+      seg.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.stripEngine.setActiveStrip(strip.id);
+        this.videoEngine.seekFrame(strip.startFrame);
+      });
+
+      this.timelineStripRanges.appendChild(seg);
+    }
+  }
+
   _openFrameBrowser() {
     if (!this.frameBrowserModal) return;
     this._renderFrameBrowserModal();
@@ -2363,6 +2357,14 @@ class RotoSketchApp {
 
       const gridDiv = document.createElement('div');
       gridDiv.className = 'fb-strip-frames-grid';
+
+      // Mouse wheel horizontal scrolling support
+      gridDiv.addEventListener('wheel', (e) => {
+        if (e.deltaY !== 0) {
+          e.preventDefault();
+          gridDiv.scrollLeft += e.deltaY;
+        }
+      }, { passive: false });
 
       if (stripFrames.length === 0) {
         gridDiv.innerHTML = '<span style="font-size: 11px; color: #64748b; padding: 10px;">그려진 키프레임 없음</span>';
