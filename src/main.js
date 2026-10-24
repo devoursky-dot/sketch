@@ -55,12 +55,8 @@ class RotoSketchApp {
     this.viewportEngine = new ViewportEngine(this.canvasStack, this.stageViewport);
 
     this._setupCanvases();
-    this._initDeviceMode();
     this._fitCanvasToWindow();
     window.addEventListener('resize', () => {
-      if (this.deviceMode === 'auto') {
-        this._applyDeviceMode('auto');
-      }
       this._fitCanvasToWindow();
     });
     document.addEventListener('fullscreenchange', () => this._updateFullscreenUI());
@@ -353,14 +349,18 @@ class RotoSketchApp {
 
   _bindUIEvents() {
     // 1. File Loading
-    this.btnOpenVideo.addEventListener('click', () => this.videoFileInput.click());
-    this.videoFileInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        const url = URL.createObjectURL(file);
-        this.videoEngine.loadVideo(url);
-      }
-    });
+    if (this.btnOpenVideo) {
+      this.btnOpenVideo.addEventListener('click', () => this.videoFileInput.click());
+    }
+    if (this.videoFileInput) {
+      this.videoFileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const url = URL.createObjectURL(file);
+          this.videoEngine.loadVideo(url);
+        }
+      });
+    }
 
     // Keyframe Drawing Filmstrip: Drag-to-Scroll & Wheel Pan
     this._bindFilmstripDragScroll();
@@ -426,55 +426,59 @@ class RotoSketchApp {
     }
 
     // 3. Onion Skin Toggle
-    this.btnToggleOnionSkin.addEventListener('click', () => {
-      this.keyframeEngine.onionSkinEnabled = !this.keyframeEngine.onionSkinEnabled;
-      this.btnToggleOnionSkin.classList.toggle('active', this.keyframeEngine.onionSkinEnabled);
-      this._renderOnionSkin(this.videoEngine.currentFrame);
-    });
+    if (this.btnToggleOnionSkin) {
+      this.btnToggleOnionSkin.addEventListener('click', () => {
+        this.keyframeEngine.onionSkinEnabled = !this.keyframeEngine.onionSkinEnabled;
+        this.btnToggleOnionSkin.classList.toggle('active', this.keyframeEngine.onionSkinEnabled);
+        this._renderOnionSkin(this.videoEngine.currentFrame);
+      });
+    }
 
     // 4. FPS Selector
-    this.fpsSelect.addEventListener('change', (e) => {
-      this.fps = parseInt(e.target.value, 10);
-      this.videoEngine.setFPS(this.fps);
-      this._buildTimelineRuler(this.videoEngine.totalFrames);
-    });
+    if (this.fpsSelect) {
+      this.fpsSelect.addEventListener('change', (e) => {
+        this.fps = parseInt(e.target.value, 10);
+        this.videoEngine.setFPS(this.fps);
+        this._buildTimelineRuler(this.videoEngine.totalFrames);
+      });
+    }
 
     // 5. Studio Toolbar & Tools Switching
-    if (this.btnToggleToolbar) {
+    if (this.btnToggleToolbar && this.studioToolbarContainer) {
       this.btnToggleToolbar.addEventListener('click', () => {
         this.studioToolbarContainer.classList.toggle('collapsed');
       });
     }
 
     // Dropdown toggles
-    if (this.btnMoreMenu) {
+    if (this.btnMoreMenu && this.dropdownMoreMenu) {
       this.btnMoreMenu.addEventListener('click', (e) => {
         e.stopPropagation();
-        const isShown = this.dropdownMoreMenu.style.display !== 'none';
+        const isShown = this.dropdownMoreMenu.style.display === 'flex';
         if (isShown) {
           this.dropdownMoreMenu.style.display = 'none';
         } else {
           const rect = this.btnMoreMenu.getBoundingClientRect();
           this.dropdownMoreMenu.style.position = 'fixed';
           this.dropdownMoreMenu.style.top = `${rect.bottom + 8}px`;
-          this.dropdownMoreMenu.style.left = `${Math.min(window.innerWidth - 340, Math.max(10, rect.left))}px`;
+          this.dropdownMoreMenu.style.left = `${Math.min(window.innerWidth - 330, Math.max(10, rect.left))}px`;
           this.dropdownMoreMenu.style.display = 'flex';
         }
         if (this.dropdownToolOptions) this.dropdownToolOptions.style.display = 'none';
       });
     }
 
-    if (this.btnToolOptions) {
+    if (this.btnToolOptions && this.dropdownToolOptions) {
       this.btnToolOptions.addEventListener('click', (e) => {
         e.stopPropagation();
-        const isShown = this.dropdownToolOptions.style.display !== 'none';
+        const isShown = this.dropdownToolOptions.style.display === 'flex';
         if (isShown) {
           this.dropdownToolOptions.style.display = 'none';
         } else {
           const rect = this.btnToolOptions.getBoundingClientRect();
           this.dropdownToolOptions.style.position = 'fixed';
           this.dropdownToolOptions.style.top = `${rect.bottom + 8}px`;
-          this.dropdownToolOptions.style.left = `${Math.min(window.innerWidth - 320, Math.max(10, rect.right - 280))}px`;
+          this.dropdownToolOptions.style.left = `${Math.min(window.innerWidth - 330, Math.max(10, rect.right - 320))}px`;
           this.dropdownToolOptions.style.display = 'flex';
         }
         if (this.dropdownMoreMenu) this.dropdownMoreMenu.style.display = 'none';
@@ -495,17 +499,26 @@ class RotoSketchApp {
       }
     });
 
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        if (this.dropdownMoreMenu) this.dropdownMoreMenu.style.display = 'none';
+        if (this.dropdownToolOptions) this.dropdownToolOptions.style.display = 'none';
+      }
+    });
+
     // Hidden Menu items
     if (this.menuItemOpenVideo) {
       this.menuItemOpenVideo.addEventListener('click', () => {
         this.dropdownMoreMenu.style.display = 'none';
-        this.videoFileInput.click();
+        if (this.videoFileInput) this.videoFileInput.click();
       });
     }
     if (this.menuItemToggleOnion) {
       this.menuItemToggleOnion.addEventListener('click', () => {
         this.dropdownMoreMenu.style.display = 'none';
-        this.btnToggleOnionSkin.click();
+        this.keyframeEngine.onionSkinEnabled = !this.keyframeEngine.onionSkinEnabled;
+        this._renderOnionSkin(this.videoEngine.currentFrame);
       });
     }
     if (this.menuItemExportSequence) {
@@ -679,21 +692,25 @@ class RotoSketchApp {
       });
     }
 
-    this.videoOpacitySlider.addEventListener('input', (e) => {
-      const val = parseInt(e.target.value, 10);
-      this.videoOpacityVal.innerText = `${val}%`;
-      this.videoOpacity = val / 100;
-      if (!this.soloAnimationMode && this.showVideo) {
-        this.videoCanvas.style.opacity = this.videoOpacity;
-      }
-    });
+    if (this.videoOpacitySlider) {
+      this.videoOpacitySlider.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value, 10);
+        if (this.videoOpacityVal) this.videoOpacityVal.innerText = `${val}%`;
+        this.videoOpacity = val / 100;
+        if (!this.soloAnimationMode && this.showVideo) {
+          this.videoCanvas.style.opacity = this.videoOpacity;
+        }
+      });
+    }
 
-    this.chkShowVideo.addEventListener('change', (e) => {
-      this.showVideo = e.target.checked;
-      if (!this.soloAnimationMode) {
-        this.videoCanvas.style.opacity = this.showVideo ? this.videoOpacity : '0';
-      }
-    });
+    if (this.chkShowVideo) {
+      this.chkShowVideo.addEventListener('change', (e) => {
+        this.showVideo = e.target.checked;
+        if (!this.soloAnimationMode) {
+          this.videoCanvas.style.opacity = this.showVideo ? this.videoOpacity : '0';
+        }
+      });
+    }
 
     // 7. Transport Controls (Play Toggle & Step Unit Navigation)
     if (this.btnPlayPause) {
@@ -1464,15 +1481,17 @@ class RotoSketchApp {
   }
 
   _updatePlayButtonState(isPlaying) {
-    if (this.playPauseIcon && this.playPauseText && this.btnPlayPause) {
+    if (this.btnPlayPause) {
+      if (this.playPauseIcon) {
+        this.playPauseIcon.innerText = isPlaying ? '⏸' : '▶';
+      }
+      if (this.playPauseText) {
+        this.playPauseText.innerText = isPlaying ? '정지' : '재생';
+      }
       if (isPlaying) {
-        this.playPauseIcon.innerText = '⏸';
-        this.playPauseText.innerText = '정지';
         this.btnPlayPause.classList.add('playing');
-        this.btnPlayPause.title = '동영상 정지 (Space)';
+        this.btnPlayPause.title = '동영상 일시정지 (Space)';
       } else {
-        this.playPauseIcon.innerText = '▶';
-        this.playPauseText.innerText = '재생';
         this.btnPlayPause.classList.remove('playing');
         this.btnPlayPause.title = '동영상 재생 (Space)';
       }
@@ -1544,7 +1563,10 @@ class RotoSketchApp {
   }
 
   _renderKeyframeChips(indices) {
-    this.keyframeCountBadge.innerText = `${indices.length} 프레임`;
+    if (this.keyframeCountBadge) {
+      this.keyframeCountBadge.innerText = `${indices.length} 프레임`;
+    }
+    if (!this.keyframeChipList) return;
     if (indices.length === 0) {
       this.keyframeChipList.innerHTML = '<span class="empty-hint">등록된 키프레임이 없습니다. 비디오 위에 그림을 그려보세요!</span>';
       return;
@@ -2196,8 +2218,7 @@ class RotoSketchApp {
 
   _fitCanvasToWindow() {
     if (!this.stageViewport || !this.canvasStack) return;
-    const isTablet = this.app ? this.app.classList.contains('device-tablet') : (window.innerWidth <= 1024);
-    const padding = isTablet ? 12 : 28;
+    const padding = 12;
     const availW = Math.max(200, this.stageViewport.clientWidth - padding * 2);
     const availH = Math.max(140, this.stageViewport.clientHeight - padding * 2);
     const aspect = (this.width && this.height) ? (this.width / this.height) : (16 / 9);
@@ -2322,16 +2343,16 @@ class RotoSketchApp {
       headerDiv.className = 'fb-strip-header';
       headerDiv.innerHTML = `
         <div class="fb-strip-info">
-          <span class="fb-strip-badge" style="background: ${strip.color}22; color: ${strip.color}; border-color: ${strip.color}55;">스트립 #${strip.id}</span>
-          <span style="font-size: 12px; font-weight: 600; color: #f8fafc;">${strip.startFrame !== null ? `${strip.startFrame}f ~ ${strip.endFrame}f` : '대기 중'}</span>
+          <span class="fb-strip-badge" style="background: ${strip.color}22; color: ${strip.color}; border-color: ${strip.color}55;">#${strip.id}</span>
+          <span style="font-size: 12px; font-weight: 600; color: #f8fafc;">${strip.startFrame !== null ? `${strip.startFrame}f ~ ${strip.endFrame}f` : '대기'}</span>
           <span style="font-size: 11px; color: #94a3b8;">(${stripFrames.length}장)</span>
         </div>
         <div style="display: flex; gap: 8px;">
-          <button class="btn-modal-action btn-play-strip" title="이 스트립 구간만 루프 재생">
-            ${isPlayingThis ? '⏸ 정지' : '▶ 스트립 재생'}
+          <button class="btn-modal-action icon-only btn-play-strip" title="${isPlayingThis ? '일시정지' : '이 스트립 루프 재생'}">
+            ${isPlayingThis ? '⏸' : '▶'}
           </button>
-          <button class="btn-modal-action btn-del-strip" title="스트립 삭제" style="color: #f43f5e;">
-            🗑️ 삭제
+          <button class="btn-modal-action icon-only btn-del-strip" title="스트립 및 드로잉 삭제" style="color: #f43f5e;">
+            🗑️
           </button>
         </div>
       `;

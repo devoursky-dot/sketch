@@ -65,10 +65,11 @@ body {
 
 .app-container {
   display: grid;
-  grid-template-rows: 56px 1fr 104px;
+  grid-template-rows: 1fr 64px;
   height: 100vh;
   width: 100vw;
   overflow: hidden;
+  position: relative;
   background: radial-gradient(circle at 50% 10%, #172554 0%, #080b12 70%);
 }
 
@@ -273,7 +274,7 @@ body {
 
 .workspace-body {
   display: grid;
-  grid-template-columns: 1fr 310px;
+  grid-template-columns: 1fr;
   height: 100%;
   overflow: hidden;
   position: relative;
@@ -2167,21 +2168,23 @@ input[type='color']::-webkit-color-swatch {
   display: inline-block;
 }
 
-/* Dropdown Panel */
+/* Dropdown Panel (Mounted directly on #app for true viewport fixed positioning) */
 .tb-dropdown-panel {
-  position: absolute;
-  top: 44px;
-  left: 0;
-  min-width: 270px;
+  position: fixed;
+  z-index: 10000;
+  min-width: 280px;
+  max-width: calc(100vw - 20px);
+  max-height: 85vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
-  background: rgba(15, 23, 42, 0.96);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 12px;
-  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.08);
-  padding: 8px;
-  z-index: 500;
+  background: rgba(15, 23, 42, 0.98);
+  backdrop-filter: blur(24px);
+  border: 1.5px solid rgba(56, 189, 248, 0.4);
+  border-radius: 14px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85), 0 0 24px rgba(56, 189, 248, 0.25);
+  padding: 10px;
   animation: ddFadeIn 0.16s ease-out;
 }
 
@@ -2237,15 +2240,9 @@ input[type='color']::-webkit-color-swatch {
 
 /* Tool Options Dropdown */
 .options-panel {
-  left: auto;
-  right: 0;
   width: 320px;
-  max-height: 80vh;
-  overflow-y: auto;
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
   gap: 12px;
+  padding: 14px;
 }
 
 .opt-panel-header {
@@ -2765,158 +2762,165 @@ input[type='color']::-webkit-color-swatch {
 }
 
 /* --------------------------------------------------------------------------
-   1. Tablet Mode (Applied via .device-tablet or Auto Media Queries)
+   Unified Tablet Layout & Icon-Only Controls
    -------------------------------------------------------------------------- */
-.device-tablet .top-bar,
-.device-tablet .property-panel,
-.is-fullscreen .top-bar,
-.is-fullscreen .property-panel {
+.top-bar,
+.property-panel {
   display: none !important;
 }
 
-.device-tablet .workspace-body,
-.is-fullscreen .workspace-body {
+.workspace-body {
   grid-template-columns: 1fr !important;
 }
 
-.device-tablet.app-container,
-.is-fullscreen.app-container {
-  grid-template-rows: 1fr 96px !important;
-}
-
-.device-tablet .stage-viewport,
-.is-fullscreen .stage-viewport {
+.stage-viewport {
   padding: 10px !important;
 }
 
-/* Touch-optimized button targets on Tablet */
-.device-tablet .studio-toolbar,
-.is-fullscreen .studio-toolbar {
-  padding: 6px 10px;
-  gap: 5px;
+.studio-toolbar {
+  padding: 6px 8px;
+  gap: 4px;
 }
 
-.device-tablet .tb-btn,
-.is-fullscreen .tb-btn {
-  min-height: 38px;
-  min-width: 38px;
+.tb-btn {
+  min-height: 36px;
+  min-width: 36px;
   padding: 0;
   font-size: 13px;
 }
 
-.device-tablet .tb-icon,
-.is-fullscreen .tb-icon {
-  width: 20px;
-  height: 20px;
+.tb-icon {
+  width: 18px;
+  height: 18px;
 }
 
-.device-tablet .timeline-dock,
-.is-fullscreen .timeline-dock {
-  padding: 4px 12px 6px 12px !important;
+.timeline-dock {
+  padding: 4px 14px 6px 14px !important;
+  height: 64px;
 }
 
-.device-tablet .transport-btn,
-.is-fullscreen .transport-btn {
-  min-height: 36px;
-  padding: 5px 12px;
-  font-size: 12px;
-}
-
-.device-tablet .step-unit-control,
-.is-fullscreen .step-unit-control {
+/* Icon-Only Transport Buttons */
+.transport-btn.icon-only {
+  width: 36px;
   height: 36px;
-  padding: 2px 8px;
+  min-width: 36px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 14px;
 }
 
-.device-tablet .step-unit-select,
-.is-fullscreen .step-unit-select {
-  font-size: 12px;
+.transport-pair-group .transport-btn.icon-only {
+  width: 34px;
+  height: 36px;
+  min-width: 34px;
+  padding: 0;
 }
 
-/* --------------------------------------------------------------------------
-   2. PC / Desktop Mode (Applied via .device-pc)
-   -------------------------------------------------------------------------- */
-.device-pc:not(.is-fullscreen) .top-bar {
-  display: flex !important;
+/* Step Unit Control (Icon/Select Only) */
+.step-unit-control {
+  height: 36px;
+  padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
 }
 
-.device-pc:not(.is-fullscreen) .property-panel {
-  display: flex !important;
+.step-unit-select {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent-cyan);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  outline: none;
+  padding: 0 2px;
 }
 
-.device-pc:not(.is-fullscreen) .workspace-body {
-  grid-template-columns: 1fr 310px !important;
+/* Speed Selector (Icon/Select Only) */
+.speed-control-group {
+  display: inline-flex;
+  align-items: center;
 }
 
-.device-pc:not(.is-fullscreen).app-container {
-  grid-template-rows: 56px 1fr 104px !important;
+.speed-select {
+  height: 36px;
+  padding: 0 6px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
 }
 
-/* --------------------------------------------------------------------------
-   3. Auto Media Queries (When not explicitly forced by .device-pc)
-   -------------------------------------------------------------------------- */
-@media (max-width: 1024px), (hover: none) and (pointer: coarse) {
-  body:not(.device-pc) .top-bar,
-  body:not(.device-pc) .property-panel {
-    display: none !important;
-  }
-
-  body:not(.device-pc) .workspace-body {
-    grid-template-columns: 1fr !important;
-  }
-
-  body:not(.device-pc) .app-container {
-    grid-template-rows: 1fr 96px !important;
-  }
-
-  body:not(.device-pc) .stage-viewport {
-    padding: 10px !important;
-  }
-
-  body:not(.device-pc) .studio-toolbar {
-    padding: 6px 10px;
-    gap: 5px;
-  }
-
-  body:not(.device-pc) .tb-btn {
-    min-height: 40px;
-    padding: 6px 11px;
-    font-size: 12px;
-  }
-
-  body:not(.device-pc) .transport-btn {
-    min-height: 38px;
-    padding: 6px 12px;
-  }
-
-  body:not(.device-pc) .step-unit-control {
-    height: 38px;
-  }
+.speed-select:hover {
+  border-color: var(--border-hover);
 }
 
-/* Mobile & Narrow Screen Support (<= 768px) */
-@media (max-width: 768px) {
-  .transport-bar {
-    gap: 6px;
-    padding: 6px 8px;
-    justify-content: space-between;
-  }
+.speed-select option {
+  background: #0f172a;
+  color: #ffffff;
+}
 
-  .timecode-display {
-    font-size: 10px;
-    gap: 8px;
-  }
+/* Loop Toggle (Icon Only) */
+.loop-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  width: 36px;
+  height: 36px;
+  transition: all var(--transition-fast);
+}
 
-  .timeline-extra-controls {
-    display: none;
-  }
+.loop-toggle:hover {
+  border-color: var(--border-hover);
+  background: #27354a;
+}
 
-  .compact-strip-bar {
-    padding: 4px 8px;
-  }
+.loop-toggle input {
+  display: none;
+}
 
-  .btn-open-gallery {
-    font-size: 11px !important;
-    padding: 4px 10px !important;
-  }
+.loop-toggle .loop-icon {
+  font-size: 15px;
+  opacity: 0.45;
+  transition: all 0.15s ease;
+}
+
+.loop-toggle input:checked + .loop-icon {
+  opacity: 1;
+  filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.7));
+}
+
+/* Frame Browser Modal Icon-Only Buttons */
+.modal-header-btns .btn.icon-only {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  border-radius: 8px;
+}
+
+.btn-modal-action.icon-only {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  border-radius: 6px;
 }
