@@ -144,6 +144,20 @@
               </svg>
             </button>
           </div>
+
+          <!-- Row 2: Strip Toolbar (Attached right under top toolbar) -->
+          <div class="studio-strip-toolbar" id="studioStripToolbar">
+            <button id="btnOpenFrameBrowser" class="tb-btn icon-only btn-open-gallery" title="그린 프레임 & 스트립 갤러리 열기">
+              <span class="tb-icon-text">🖼️</span>
+            </button>
+            <button id="btnNewStrip" class="tb-btn icon-only" title="새로운 스트립 번호 준비">
+              <span class="tb-icon-text">➕</span>
+            </button>
+            <button id="btnPlayAllStrips" class="tb-btn icon-only btn-play-all-strips" title="내가 그린 손그림 스트립만 연속 재생">
+              <span class="tb-icon-text">⏩</span>
+            </button>
+            <span class="strip-toolbar-badge" id="currentStripBadge" title="현재 활성 스트립 번호">#1</span>
+          </div>
         </div>
 
         <!-- Floating Transform Action Pill (Visible when transform tool is active) -->
@@ -392,19 +406,6 @@
               <span class="t-icon">▶</span>
             </button>
           </div>
-
-          <div class="transport-vsep"></div>
-
-          <!-- Strip & Frame Gallery Buttons (Icon Only) -->
-          <button id="btnOpenFrameBrowser" class="transport-btn btn-open-gallery icon-only" title="그린 프레임 & 스트립 갤러리 열기">
-            <span class="t-icon">🖼️</span>
-          </button>
-          <button id="btnNewStrip" class="transport-btn icon-only" title="새로운 스트립 준비">
-            <span class="t-icon">➕</span>
-          </button>
-          <button id="btnPlayAllStrips" class="transport-btn btn-play-all-strips icon-only" title="내가 그린 손그림 스트립만 연속 재생">
-            <span class="icon-play-all">⏩</span>
-          </button>
         </div>
 
         <!-- Frame Timecode Display -->

@@ -65,6 +65,7 @@ class RotoSketchApp {
     this._bindUIEvents();
     this._bindKeyboardShortcuts();
     this._startRenderLoop();
+    this._updateActiveStripBadge();
 
     // Auto-load high quality sample video on startup for immediate experience
     this.loadSampleVideo();
@@ -227,6 +228,10 @@ class RotoSketchApp {
     this.stripCountBadge = document.getElementById('stripCountBadge');
     this.btnNewStrip = document.getElementById('btnNewStrip');
     this.btnPlayAllStrips = document.getElementById('btnPlayAllStrips');
+    this.currentStripBadge = document.getElementById('currentStripBadge');
+    if (this.currentStripBadge) {
+      this.currentStripBadge.addEventListener('click', () => this._openFrameBrowser());
+    }
     this.playingStripId = null;
     this.isStripPlaying = false;
     this.isAllStripsPlaying = false;
@@ -309,10 +314,14 @@ class RotoSketchApp {
 
     this.stripEngine.onStripsChanged = () => {
       this._renderKeyframeFilmstrip(this.keyframeEngine.getKeyframeIndices());
+      this._updateActiveStripBadge();
+      this._renderTimelineStripRanges();
     };
 
     this.stripEngine.onActiveStripChanged = () => {
       this._renderKeyframeFilmstrip(this.keyframeEngine.getKeyframeIndices());
+      this._updateActiveStripBadge();
+      this._renderTimelineStripRanges();
     };
 
     this.brushEngine.onPressureChange = (p, width) => {
@@ -554,13 +563,14 @@ class RotoSketchApp {
       }
     };
 
-    // Stage viewport mouse wheel zoom
+    // Stage viewport mouse wheel zoom centered at cursor position
     if (this.stageViewport) {
       this.stageViewport.addEventListener('wheel', (e) => {
-        if (e.ctrlKey || this.currentTool === 'zoom') {
+        const isOverUI = e.target.closest('.studio-toolbar-container, .tb-dropdown-panel, .timeline-dock, .modal-backdrop');
+        if (!isOverUI || e.ctrlKey || this.currentTool === 'zoom') {
           e.preventDefault();
           const delta = e.deltaY < 0 ? 0.15 : -0.15;
-          this.viewportEngine.zoomBy(delta, false);
+          this.viewportEngine.zoomByAt(e.clientX, e.clientY, delta, false);
         }
       }, { passive: false });
     }
@@ -1235,7 +1245,7 @@ class RotoSketchApp {
       const dy = this.zoomStartClientY - e.clientY;
       if (Math.abs(dy) > 3) this.zoomDragMoved = true;
       const delta = (dy / 150) * 1.5;
-      this.viewportEngine.setZoom(this.zoomInitialScale + delta, false);
+      this.viewportEngine.zoomAt(this.zoomStartClientX, this.zoomStartClientY, this.zoomInitialScale + delta, false);
       return;
     }
 
@@ -1282,7 +1292,7 @@ class RotoSketchApp {
       if (!this.zoomDragMoved) {
         // Simple click without dragging: Zoom In by +0.25x (or Zoom Out on Alt-click)
         const delta = e.altKey ? -0.25 : 0.25;
-        this.viewportEngine.zoomBy(delta, true);
+        this.viewportEngine.zoomByAt(e.clientX, e.clientY, delta, true);
       }
       return;
     }
@@ -1808,7 +1818,7 @@ class RotoSketchApp {
 
     if (this.btnPlayAllStrips) {
       this.btnPlayAllStrips.classList.add('active-playing');
-      this.btnPlayAllStrips.innerHTML = '<span class="icon-play-all">⏸</span><span class="lbl-play-all">전체 정지</span>';
+      this.btnPlayAllStrips.innerHTML = '<span class="tb-icon-text">⏸</span>';
       this.btnPlayAllStrips.title = '전체 스트립 연속 재생 정지';
     }
 
@@ -1841,7 +1851,7 @@ class RotoSketchApp {
 
     if (this.btnPlayAllStrips) {
       this.btnPlayAllStrips.classList.remove('active-playing');
-      this.btnPlayAllStrips.innerHTML = '<span class="icon-play-all">⏩</span><span class="lbl-play-all">전체 스트립 재생</span>';
+      this.btnPlayAllStrips.innerHTML = '<span class="tb-icon-text">⏩</span>';
       this.btnPlayAllStrips.title = '비디오는 끄고 오직 내가 그린 손그림들만 빈 구간을 건너뛰고 연속 재생합니다.';
     }
 
@@ -2410,6 +2420,20 @@ class RotoSketchApp {
             tCtx.drawImage(kf, 0, 0, 120, 68);
           }
           thumbBox.appendChild(tCanvas);
+
+          // Individual Frame Delete Button
+          const delFrameBtn = document.createElement('button');
+          delFrameBtn.className = 'fb-frame-del-btn';
+          delFrameBtn.title = `프레임 #${frame} 드로잉 삭제`;
+          delFrameBtn.innerHTML = '🗑️';
+          delFrameBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (confirm(`프레임 #${frame}의 그림을 삭제하시겠습니까?`)) {
+              this._deleteSingleKeyframe(frame);
+            }
+          });
+          thumbBox.appendChild(delFrameBtn);
+
           card.appendChild(thumbBox);
 
           const meta = document.createElement('div');
@@ -2431,6 +2455,43 @@ class RotoSketchApp {
 
       groupDiv.appendChild(gridDiv);
       this.frameBrowserContent.appendChild(groupDiv);
+    }
+  }
+
+  _deleteSingleKeyframe(frameIndex) {
+    this._stopStripPlaybacks();
+    this.keyframeEngine.deleteKeyframe(frameIndex);
+    this.stripEngine.removeFrame(frameIndex);
+
+    if (frameIndex === this.videoEngine.currentFrame) {
+      this.dCtx.clearRect(0, 0, this.canvasWidth || this.width || 854, this.canvasHeight || this.height || 480);
+    }
+
+    this._renderOnionSkin(this.videoEngine.currentFrame);
+    const indices = this.keyframeEngine.getKeyframeIndices();
+    this._renderKeyframeMarkers(indices);
+    this._renderKeyframeChips(indices);
+    this._renderKeyframeFilmstrip(indices);
+    this._renderTimelineStripRanges();
+    this._updateActiveStripBadge();
+    this._renderFrameBrowserModal();
+  }
+
+  _updateActiveStripBadge() {
+    if (!this.currentStripBadge) return;
+    const active = this.stripEngine.getActiveStrip();
+    if (active) {
+      this.currentStripBadge.innerText = `#${active.id}`;
+      this.currentStripBadge.style.color = active.color;
+      this.currentStripBadge.style.borderColor = `${active.color}88`;
+      this.currentStripBadge.style.backgroundColor = `${active.color}22`;
+      this.currentStripBadge.title = `현재 활성 스트립 #${active.id} (${active.startFrame !== null ? `${active.startFrame}f ~ ${active.endFrame}f` : '대기'}) - 클릭하여 갤러리 열기`;
+    } else {
+      this.currentStripBadge.innerText = '#1';
+      this.currentStripBadge.style.color = '#38bdf8';
+      this.currentStripBadge.style.borderColor = 'rgba(56, 189, 248, 0.4)';
+      this.currentStripBadge.style.backgroundColor = 'rgba(56, 189, 248, 0.18)';
+      this.currentStripBadge.title = '현재 활성 스트립 번호 - 클릭하여 갤러리 열기';
     }
   }
 }

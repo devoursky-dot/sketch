@@ -2060,13 +2060,19 @@ input[type='color']::-webkit-color-swatch {
   transform: translateX(-50%);
   z-index: 200;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  gap: 5px;
   max-width: calc(100vw - 20px);
+  pointer-events: none;
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
 }
 
 .studio-toolbar-container.collapsed .studio-toolbar > :not(#btnToggleToolbar) {
+  display: none !important;
+}
+
+.studio-toolbar-container.collapsed .studio-strip-toolbar {
   display: none !important;
 }
 
@@ -2089,6 +2095,53 @@ input[type='color']::-webkit-color-swatch {
   overflow-y: visible;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  pointer-events: auto;
+}
+
+/* Attached Row 2: Strip Management Toolbar */
+.studio-strip-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  background: rgba(15, 23, 42, 0.92);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  pointer-events: auto;
+}
+
+.studio-strip-toolbar .tb-btn {
+  height: 28px;
+  min-width: 28px;
+  padding: 0 4px;
+  font-size: 13px;
+}
+
+.studio-strip-toolbar .tb-btn.icon-only {
+  width: 28px;
+  min-width: 28px;
+  padding: 0;
+}
+
+.strip-toolbar-badge {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(56, 189, 248, 0.18);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.strip-toolbar-badge:hover {
+  transform: scale(1.05);
+  background: rgba(56, 189, 248, 0.28);
 }
 
 .studio-toolbar::-webkit-scrollbar {
@@ -2681,6 +2734,7 @@ input[type='color']::-webkit-color-swatch {
 }
 
 .fb-frame-thumb-box {
+  position: relative;
   width: 120px;
   height: 68px;
   background: #ffffff;
@@ -2694,6 +2748,38 @@ input[type='color']::-webkit-color-swatch {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.fb-frame-del-btn {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(244, 63, 94, 0.4);
+  color: #f43f5e;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 11px;
+  line-height: 1;
+  padding: 0;
+  transition: all 0.16s ease;
+  z-index: 5;
+  opacity: 0.85;
+}
+
+.fb-frame-del-btn:hover {
+  background: #f43f5e;
+  color: #ffffff;
+  border-color: #f43f5e;
+  opacity: 1;
+  transform: scale(1.1);
+  box-shadow: 0 0 8px rgba(244, 63, 94, 0.6);
 }
 
 .fb-frame-meta {
