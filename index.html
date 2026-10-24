@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RotoSketch Studio - 스케치북 기반 동영상 로토스코핑 & 애니메이션</title>
+  <meta name="description" content="SketchBook Pro 역추적 분석 기반 부드러운 펜 보간, 올가미 선택 및 변형 기능을 결합한 전문가급 동영상 로토스코핑 & 키프레임 2D 애니메이션 제작 스튜디오">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./src/style.css">
+</head>
+<body>
+  <div id="app" class="app-container">
+    <!-- Top Bar -->
+    <header class="top-bar">
+      <div class="logo-group">
+        <div class="logo-icon">🎬</div>
+        <div class="logo-text">
+          <h1>RotoSketch Studio</h1>
+          <span class="engine-badge">SketchBook Pro Engine</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <!-- Video Inputs -->
+        <div class="btn-group">
+          <input type="file" id="videoFileInput" accept="video/mp4,video/webm" style="display: none;">
+          <button id="btnOpenVideo" class="btn btn-secondary" title="로컬 MP4/WebM 동영상 파일 열기">
+            <span class="icon">📁</span> 동영상 열기
+          </button>
+          <button id="btnLoadSample" class="btn btn-accent" title="즉시 테스트할 수 있는 고화질 24FPS 액션 샘플 영상 생성 및 로드">
+            <span class="icon">✨</span> 샘플 액션 영상 로드
+          </button>
+        </div>
+
+        <!-- Mode & Onion Skin Toggles -->
+        <div class="btn-group">
+          <button id="btnPlayKeyframesOnly" class="btn btn-flipbook" title="내가 그린 키프레임들만 순서대로 연속 루프 재생 (플립북 애니메이션)">
+            <span class="icon">🎬</span> <span id="flipbookBtnText">그린 키프레임만 모아보기</span>
+          </button>
+          <button id="btnTogglePlaybackMode" class="btn btn-mode" title="비디오 트레이싱 모드와 순수 드로잉 애니메이션 감상 모드 전환">
+            <span class="icon">🎨</span> <span id="playbackModeLabel">단독 애니메이션 보기</span>
+          </button>
+          <button id="btnToggleOnionSkin" class="btn btn-toggle active" title="이전/다음 프레임 잔상 표시 (어니언 스킨)">
+            <span class="icon">🧅</span> 어니언 스킨
+          </button>
+        </div>
+
+        <!-- FPS Setting -->
+        <div class="fps-selector">
+          <label for="fpsSelect">FPS:</label>
+          <select id="fpsSelect">
+            <option value="12">12 FPS</option>
+            <option value="24" selected>24 FPS (영화)</option>
+            <option value="30">30 FPS (웹)</option>
+          </select>
+        </div>
+
+        <!-- Export -->
+        <div class="btn-group">
+          <button id="btnExportFrame" class="btn btn-secondary" title="현재 그려진 프레임을 PNG로 다운로드">
+            <span class="icon">🖼️</span> 현재 프레임 저장
+          </button>
+          <button id="btnExportSequence" class="btn btn-secondary" title="모든 키프레임을 PNG 시퀀스로 다운로드">
+            <span class="icon">📁</span> PNG 시퀀스
+          </button>
+          <button id="btnExportVideo" class="btn btn-accent-gold" title="그린 애니메이션을 비디오 파일(.webm/.mp4)로 저장">
+            <span class="icon">🎥</span> 애니메이션 비디오 저장
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="workspace-body">
+      <!-- Center Stage Area with Studio Floating/Docked Toolbar -->
+      <main class="stage-viewport" id="stageViewport">
+        <!-- Modern Studio Toolbar (Left-to-Right: Collapse, More Menu, Pen, Eraser, Lasso, Transform, Zoom, Pan, Fit, Options) -->
+        <div class="studio-toolbar-container" id="studioToolbarContainer">
+          <div class="studio-toolbar" id="studioToolbar">
+            <!-- 1. 툴바 숨김 버튼 -->
+            <button id="btnToggleToolbar" class="tb-btn icon-only" title="툴바 숨기기 / 펼치기 (캔버스 작업 공간 극대화)">
+              <svg class="tb-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
+
+            <!-- 2. 숨김 메뉴 (더보기 드롭다운) -->
+            <div class="tb-dropdown-group">
+              <button id="btnMoreMenu" class="tb-btn" title="숨김 메뉴 열기&#10;동영상 열기, 샘플 로드, 어니언 스킨, 비디오 내보내기, 실행 취소 등의 기능을 엽니다.">
+                <svg class="tb-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="4" y1="12" x2="20" y2="12"></line>
+                  <line x1="4" y1="6" x2="20" y2="6"></line>
+                  <line x1="4" y1="18" x2="20" y2="18"></line>
+                </svg>
+                <span class="tb-label">메뉴</span>
+              </button>
+              <!-- Hidden Menu Dropdown -->
+              <div id="dropdownMoreMenu" class="tb-dropdown-panel" style="display: none;">
+                <div class="dd-item" id="menuItemOpenVideo">
+                  <span class="dd-icon">📁</span>
+                  <div class="dd-info">
+                    <span class="dd-title">동영상 파일 열기</span>
+                    <span class="dd-sub">MP4/WebM 비디오 불러오기</span>
+                  </div>
+                </div>
+                <div class="dd-item" id="menuItemLoadSample">
+                  <span class="dd-icon">✨</span>
+                  <div class="dd-info">
+                    <span class="dd-title">샘플 액션 영상 로드</span>
+                    <span class="dd-sub">24FPS 액션 영상 즉시 로드</span>
+                  </div>
+                </div>
+                <div class="dd-divider"></div>
+                <div class="dd-item" id="menuItemToggleSolo">
+                  <span class="dd-icon">🎨</span>
+                  <div class="dd-info">
+                    <span class="dd-title" id="menuSoloLabel">단독 애니메이션 보기</span>
+                    <span class="dd-sub">비디오 배경 숨김 / 표시 전환</span>
+                  </div>
+                </div>
+                <div class="dd-item" id="menuItemToggleOnion">
+                  <span class="dd-icon">🧅</span>
+                  <div class="dd-info">
+                    <span class="dd-title">어니언 스킨 토글</span>
+                    <span class="dd-sub">이전/다음 프레임 잔상 표시 (단축키: O)</span>
+                  </div>
+                </div>
+                <div class="dd-divider"></div>
+                <div class="dd-item" id="menuItemExportFrame">
+                  <span class="dd-icon">🖼️</span>
+                  <div class="dd-info">
+                    <span class="dd-title">현재 프레임 PNG 다운로드</span>
+                    <span class="dd-sub">그린 그림 단일 이미지 저장</span>
+                  </div>
+                </div>
+                <div class="dd-item" id="menuItemExportSequence">
+                  <span class="dd-icon">📁</span>
+                  <div class="dd-info">
+                    <span class="dd-title">PNG 시퀀스 다운로드</span>
+                    <span class="dd-sub">모든 키프레임 개별 저장</span>
+                  </div>
+                </div>
+                <div class="dd-item" id="menuItemExportVideo">
+                  <span class="dd-icon">🎥</span>
+                  <div class="dd-info">
+                    <span class="dd-title">애니메이션 비디오(.webm) 저장</span>
+                    <span class="dd-sub">동영상 파일로 인코딩 저장</span>
+                  </div>
+                </div>
+                <div class="dd-divider"></div>
+                <div class="dd-item" id="btnUndo">
+                  <span class="dd-icon">↩️</span>
+                  <div class="dd-info">
+                    <span class="dd-title">실행 취소 (Ctrl+Z)</span>
+                  </div>
+                </div>
+                <div class="dd-item" id="btnRedo">
+                  <span class="dd-icon">↪️</span>
+                  <div class="dd-info">
+                    <span class="dd-title">다시 실행 (Ctrl+Y)</span>
+                  </div>
+                </div>
+                <div class="dd-item danger" id="btnClearCurrentFrame">
+                  <span class="dd-icon">🗑️</span>
+                  <div class="dd-info">
+                    <span class="dd-title">현재 프레임 드로잉 비우기</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="tb-sep"></div>
+
+            <!-- 3. 펜 (브러시) 도구 -->
+            <button id="toolBrush" class="tb-btn active" title="펜 / 브러시 도구 (단축키: B)&#10;와콤 필압 감지 및 손떨림 보정이 적용된 인킹 펜입니다.">
+              <svg class="tb-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
+                <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
+                <path d="M2 2l7.586 7.586"></path>
+                <circle cx="11" cy="11" r="2"></circle>
+              </svg>
+              <span class="tb-label">펜</span>
+              <span id="penIndicatorSize" class="tb-badge">6px</span>
+            </button>
+
+            <!-- 4. 지우개 도구 -->
+            <button id="toolEraser" class="tb-btn" title="지우개 도구 (단축키: E)&#10;드로잉을 지웁니다. 펜 크기와 별도로 지우개 크기가 독립 저장됩니다.">
+              <svg class="tb-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"></path>
+                <path d="M22 21H7"></path>
+                <path d="m5 11 9 9"></path>
+              </svg>
+              <span class="tb-label">지우개</span>
+              <span id="eraserIndicatorSize" class="tb-badge">24px</span>
+            </button>
+
+            <!-- 5. 올가미 도구 -->
+            <button id="toolLasso" class="tb-btn" title="올가미 선택 (단축키: L)&#10;원하는 드로잉 영역을 자유형으로 둘러싸서 선택합니다.">
+              <svg class="tb-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M7 22a5 5 0 0 1-2-4"></path>
+                <path d="M3.3 14A6.8 6.8 0 0 1 2 10c0-4.4 4.5-8 10-8s10 3.6 10 8-4.5 8-10 8a12 12 0 0 1-5-1"></path>
+                <path d="M5 18a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"></path>
+              </svg>
+              <span class="tb-label">올가미</span>
+            </button>
+
+            <!-- 6. 변형툴 -->
+            <button id="toolTransform" class="tb-btn" title="선택 영역 변형 (단축키: T)&#10;선택한 영역을 드래그하여 이동, 크기 조절, 회전합니다.">
+              <svg class="tb-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m5 9-3 3 3 3"></path>
+                <path d="m9 5 3-3 3 3"></path>
+                <path d="m15 19-3 3-3-3"></path>
+                <path d="m19 9 3 3-3 3"></path>
+                <path d="M2 12h20"></path>
+                <path d="M12 2v20"></path>
+              </svg>
+              <span class="tb-label">변형</span>
+            </button>
+
+            <div class="tb-sep"></div>
+
+            <!-- 7. 돋보기 (마우스로 드래그해서 크기조절) -->
+            <button id="toolZoom" class="tb-btn" title="돋보기 / 줌 도구 (단축키: Z)&#10;캔버스를 클릭하거나 위아래로 드래그하여 최대 3배(300%)까지 확대/축소합니다.&#10;Alt+클릭 시 축소됩니다.">
+              <svg class="tb-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                <line x1="11" y1="8" x2="11" y2="14"></line>
+                <line x1="8" y1="11" x2="14" y2="11"></line>
+              </svg>
+              <span class="tb-label">돋보기</span>
+              <span id="zoomDisplayBadge" class="tb-badge">100%</span>
+            </button>
+
+            <!-- 8. 화면 이동 버튼 (핸드 툴) -->
+            <button id="toolPan" class="tb-btn" title="화면 이동 / 핸드 도구 (단축키: H)&#10;마우스로 캔버스를 드래그하여 원하는 작업 위치로 자유롭게 이동합니다.">
+              <svg class="tb-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"></path>
+                <path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"></path>
+                <path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"></path>
+                <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"></path>
+              </svg>
+              <span class="tb-label">화면 이동</span>
+            </button>
+
+            <!-- 9. 꽉찬화면 (100% 전체보기 리셋) -->
+            <button id="btnFitScreen" class="tb-btn" title="꽉찬화면 / 100% 전체보기 (단축키: 0)&#10;캔버스 배율(100%)과 위치를 중앙으로 즉시 초기화하여 전체를 봅니다.">
+              <svg class="tb-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8 3H5a2 2 0 0 0-2 2v3"></path>
+                <path d="M21 8V5a2 2 0 0 0-2-2h-3"></path>
+                <path d="M3 16v3a2 2 0 0 0 2 2h3"></path>
+                <path d="M16 21h3a2 2 0 0 0 2-2v-3"></path>
+              </svg>
+              <span class="tb-label">전체보기</span>
+            </button>
+
+            <div class="tb-sep"></div>
+
+            <!-- 10. 옵션 설정 드롭다운 메뉴 -->
+            <div class="tb-dropdown-group">
+              <button id="btnToolOptions" class="tb-btn highlight-options" title="도구 옵션 설정&#10;펜 크기, 지우개 크기, 손떨림 보정, 투명도, 색상을 설정하는 드롭다운 창을 엽니다.">
+                <svg class="tb-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="4" y1="21" x2="4" y2="14"></line>
+                  <line x1="4" y1="10" x2="4" y2="3"></line>
+                  <line x1="12" y1="21" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12" y2="3"></line>
+                  <line x1="20" y1="21" x2="20" y2="16"></line>
+                  <line x1="20" y1="12" x2="20" y2="3"></line>
+                  <line x1="1" y1="14" x2="7" y2="14"></line>
+                  <line x1="9" y1="8" x2="15" y2="8"></line>
+                  <line x1="17" y1="16" x2="23" y2="16"></line>
+                </svg>
+                <span class="tb-label">옵션 설정</span>
+              </button>
+
+              <!-- Tool Options Dropdown Panel (Closes on outside click) -->
+              <div id="dropdownToolOptions" class="tb-dropdown-panel options-panel" style="display: none;">
+                <div class="opt-panel-header">
+                  <h4>🎨 펜 & 지우개 도구 옵션</h4>
+                  <span class="opt-close-hint">(바깥 클릭 시 닫힘)</span>
+                </div>
+
+                <!-- 펜 크기 -->
+                <div class="opt-row">
+                  <div class="opt-label-line">
+                    <label for="penSizeSlider">✏️ 펜 굵기 (Pen Size)</label>
+                    <span id="penSizeVal" class="opt-val">6 px</span>
+                  </div>
+                  <input type="range" id="penSizeSlider" min="1" max="80" value="6">
+                </div>
+
+                <!-- 지우개 크기 (독립 저장) -->
+                <div class="opt-row">
+                  <div class="opt-label-line">
+                    <label for="eraserSizeSlider">🧹 지우개 굵기 (Eraser Size)</label>
+                    <span id="eraserSizeVal" class="opt-val">24 px</span>
+                  </div>
+                  <input type="range" id="eraserSizeSlider" min="2" max="120" value="24">
+                </div>
+
+                <!-- 불투명도 -->
+                <div class="opt-row">
+                  <div class="opt-label-line">
+                    <label for="brushOpacitySlider">불투명도</label>
+                    <span id="brushOpacityVal" class="opt-val">100%</span>
+                  </div>
+                  <input type="range" id="brushOpacitySlider" min="10" max="100" value="100">
+                </div>
+
+                <!-- 색상 선택 -->
+                <div class="opt-row">
+                  <label>펜 색상</label>
+                  <div class="opt-color-palette">
+                    <input type="color" id="brushColorPicker" value="#38bdf8">
+                    <div class="color-swatches" id="colorSwatches">
+                      <button class="color-chip active" style="background: #38bdf8;" data-color="#38bdf8"></button>
+                      <button class="color-chip" style="background: #f43f5e;" data-color="#f43f5e"></button>
+                      <button class="color-chip" style="background: #10b981;" data-color="#10b981"></button>
+                      <button class="color-chip" style="background: #fbbf24;" data-color="#fbbf24"></button>
+                      <button class="color-chip" style="background: #a855f7;" data-color="#a855f7"></button>
+                      <button class="color-chip" style="background: #ffffff;" data-color="#ffffff"></button>
+                      <button class="color-chip" style="background: #000000;" data-color="#000000"></button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 손떨림 보정 -->
+                <div class="opt-row">
+                  <div class="opt-label-line">
+                    <label>손떨림 보정 레벨</label>
+                    <span id="stabilizerBadge" class="badge-accent">2단계 (안정)</span>
+                  </div>
+                  <div class="stabilizer-levels" id="stabilizerLevelButtons">
+                    <button class="stab-btn" data-level="0" title="보정 없음 (즉각적인 반응)">0 끔</button>
+                    <button class="stab-btn" data-level="1" title="자연스러운 보정 (빠른 스케치)">1단계 자연</button>
+                    <button class="stab-btn active" data-level="2" title="안정된 라인아트 (부드러운 인킹, 권장)">2단계 안정</button>
+                    <button class="stab-btn" data-level="3" title="초정밀 로프 가이드 (손떨림 완벽 제거)">3단계 로프</button>
+                  </div>
+                  <p id="stabilizerDesc" class="opt-desc">2단계: 손떨림을 효과적으로 흡수하여 깔끔한 만화/애니메이션 인킹을 제공합니다.</p>
+                </div>
+
+                <!-- 와콤 필압 감지 -->
+                <div class="opt-gauge-box">
+                  <div class="gauge-header">
+                    <span class="gauge-title">🖊️ 와콤 필압 감지</span>
+                    <span id="penDeviceType" class="gauge-device">마우스 입력</span>
+                  </div>
+                  <div class="gauge-bar-track">
+                    <div id="gaugeBarFill" class="gauge-bar-fill"></div>
+                  </div>
+                  <div class="gauge-footer">
+                    <span>필압: <strong id="gaugePressureVal">0%</strong></span>
+                    <span>선 두께: <strong id="gaugeWidthVal">0 px</strong></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Floating Transform Action Pill (Visible when transform tool is active) -->
+        <div id="transformActionGroup" class="transform-floating-bar" style="display: none;">
+          <span class="tf-title">📐 선택 변형 모드</span>
+          <button id="btnCommitTransform" class="btn btn-apply" title="변형을 레이어에 확정 반영 (Enter)">
+            <span class="icon">✔️</span> 적용 (Enter)
+          </button>
+          <button id="btnCancelTransform" class="btn btn-cancel" title="변형 취소 및 원본 복원 (Esc)">
+            <span class="icon">❌</span> 취소 (Esc)
+          </button>
+          <button id="btnClearSelection" class="btn btn-sub" title="선택 영역 해제 (Esc)">
+            선택 해제
+          </button>
+        </div>
+
+        <!-- Canvas Stack (Zoom & Pan Target) -->
+        <div class="canvas-stack" id="canvasStack">
+          <!-- Layer 1: Video Frame Canvas -->
+          <canvas id="videoCanvas" width="854" height="480"></canvas>
+          <!-- Layer 2: Onion Skin Ghost Canvas -->
+          <canvas id="onionCanvas" width="854" height="480"></canvas>
+          <!-- Layer 3: Main Active Drawing Canvas -->
+          <canvas id="drawingCanvas" width="854" height="480"></canvas>
+          <!-- Layer 4: Selection & Transform Gizmo Overlay Canvas -->
+          <canvas id="overlayCanvas" width="854" height="480"></canvas>
+        </div>
+
+        <!-- Mode Watermark Badge -->
+        <div id="stageModeBadge" class="stage-badge" style="display: none;">
+          🎨 단독 애니메이션 감상 모드
+        </div>
+      </main>
+
+      <!-- Right Property Panel -->
+      <aside class="property-panel">
+        <!-- Video Backdrop Settings -->
+        <div class="panel-card">
+          <div class="card-header">
+            <h3>비디오 트레이싱 레이어</h3>
+          </div>
+          <div class="prop-row">
+            <div class="prop-label-group">
+              <label for="videoOpacitySlider">비디오 투명도</label>
+              <span id="videoOpacityVal" class="prop-value">50%</span>
+            </div>
+            <input type="range" id="videoOpacitySlider" min="0" max="100" value="50">
+          </div>
+          <div class="prop-row-check">
+            <input type="checkbox" id="chkShowVideo" checked>
+            <label for="chkShowVideo">비디오 배경 보이기</label>
+          </div>
+        </div>
+
+        <!-- Keyframes Manager -->
+        <div class="panel-card keyframe-card">
+          <div class="card-header">
+            <h3>키프레임 목록</h3>
+            <span id="keyframeCountBadge" class="badge-count">0 프레임</span>
+          </div>
+          <p class="card-desc">드로잉을 그리면 해당 프레임이 키프레임으로 자동 등록됩니다.</p>
+          <div class="prop-row-check hold-check-row">
+            <input type="checkbox" id="chkHoldDrawing" checked>
+            <label for="chkHoldDrawing" title="체크 시 다음 키프레임까지 그림이 화면에 유지됩니다 (애니메이션 표준)">그림 유지 (다음 키프레임까지 지속)</label>
+          </div>
+          <div id="keyframeChipList" class="keyframe-chip-list">
+            <span class="empty-hint">등록된 키프레임이 없습니다. 비디오 위에 그림을 그려보세요!</span>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Bottom Timeline & Filmstrip Dock -->
+    <footer class="timeline-dock">
+      <!-- Transport Control Bar -->
+      <div class="transport-bar">
+        <div class="transport-buttons">
+          <!-- Play / Pause Toggle Button -->
+          <button id="btnPlayPause" class="transport-btn primary" title="동영상 재생 / 일시정지 (Space)">
+            <span id="playPauseIcon" class="t-icon">▶</span>
+            <span id="playPauseText">재생</span>
+          </button>
+
+          <!-- 1프레임 이동 (뒤로 / 앞으로 나란히 배치) -->
+          <div class="transport-pair-group" title="1프레임 단위 이동 (단축키: [ 또는 ← / ] 또는 →)">
+            <button id="btnPrevFrame" class="transport-btn pair-left" title="1프레임 뒤로 이동 (← 또는 [ )">
+              <span class="t-icon">◀</span> -1프레임
+            </button>
+            <button id="btnNextFrame" class="transport-btn pair-right" title="1프레임 앞으로 이동 (→ 또는 ] )">
+              +1프레임 <span class="t-icon">▶</span>
+            </button>
+          </div>
+
+          <!-- 5프레임 이동 (뒤로 / 앞으로 나란히 배치) -->
+          <div class="transport-pair-group" title="5프레임 단위 이동 (단축키: Shift + [ 또는 Shift + ← / Shift + ] 또는 Shift + →)">
+            <button id="btnPrev5Frame" class="transport-btn pair-left" title="5프레임 뒤로 이동 (Shift + ←)">
+              <span class="t-icon">⏪</span> -5프레임
+            </button>
+            <button id="btnNext5Frame" class="transport-btn pair-right" title="5프레임 앞으로 이동 (Shift + →)">
+              +5프레임 <span class="t-icon">⏩</span>
+            </button>
+          </div>
+
+          <!-- 1초 이동 (뒤로 / 앞으로 나란히 배치) -->
+          <div class="transport-pair-group" title="1초 단위 이동 (단축키: Ctrl + ← / Ctrl + →)">
+            <button id="btnJumpBack1s" class="transport-btn pair-left" title="1초 뒤로 이동 (Ctrl + ←)">
+              <span class="t-icon">⏮</span> -1초
+            </button>
+            <button id="btnJumpForward1s" class="transport-btn pair-right" title="1초 앞으로 이동 (Ctrl + →)">
+              +1초 <span class="t-icon">⏭</span>
+            </button>
+          </div>
+
+          <button id="btnPlayKeyframesTransport" class="transport-btn highlight-flipbook" title="내가 그린 키프레임들만 순서대로 연속 루프 재생 (플립북 애니메이션)">
+            <span class="t-icon">⚡</span> 플립북 모아보기
+          </button>
+        </div>
+
+        <!-- Frame Timecode Display -->
+        <div class="timecode-display">
+          <div class="timecode-item">
+            <span class="tc-label">FRAME</span>
+            <span id="displayFrameNumber" class="tc-value highlight">0</span>
+            <span class="tc-divider">/</span>
+            <span id="displayTotalFrames" class="tc-value">0</span>
+          </div>
+          <div class="timecode-item">
+            <span class="tc-label">TIME</span>
+            <span id="displayCurrentTime" class="tc-value">00:00.00</span>
+            <span class="tc-divider">/</span>
+            <span id="displayTotalDuration" class="tc-value">00:00.00</span>
+          </div>
+        </div>
+
+        <div class="timeline-extra-controls">
+          <div class="speed-control-group">
+            <span class="speed-label">속도:</span>
+            <select id="selPlaybackSpeed" class="speed-select" title="재생 속도 조절 (0.25x ~ 2.0x)">
+              <option value="0.25">0.25x</option>
+              <option value="0.5">0.5x</option>
+              <option value="1.0" selected>1.0x</option>
+              <option value="1.5">1.5x</option>
+              <option value="2.0">2.0x</option>
+            </select>
+          </div>
+          <label class="loop-toggle">
+            <input type="checkbox" id="chkLoop" checked>
+            <span>반복</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Clean Timeline Scrubber (Ruler + Scrubber + Keyframe Pins) -->
+      <div class="timeline-track-container" id="timelineTrackContainer">
+        <!-- Floating Live Thumbnail Preview Card (Zero flicker) -->
+        <div id="timelineHoverCard" class="timeline-hover-card" style="display: none;">
+          <div class="hover-card-preview">
+            <canvas id="timelineHoverCanvas" width="160" height="90"></canvas>
+            <div id="hoverDrawingBadge" class="hover-drawing-badge" style="display: none;">✏️ 키프레임 스케치</div>
+          </div>
+          <div class="hover-card-info">
+            <span id="hoverFrameNum" class="hover-frame-num">프레임 #0</span>
+            <span id="hoverTimecode" class="hover-timecode">00:00.00</span>
+          </div>
+          <div class="hover-card-arrow"></div>
+        </div>
+
+        <!-- Ruler with frame markings -->
+        <div class="timeline-ruler" id="timelineRuler"></div>
+        <!-- Scrubber track with keyframe markers -->
+        <div class="timeline-track" id="timelineTrack">
+          <!-- Playhead indicator -->
+          <div class="timeline-playhead" id="timelinePlayhead">
+            <div class="playhead-head"></div>
+            <div class="playhead-line"></div>
+          </div>
+          <!-- Keyframe markers container -->
+          <div class="keyframe-markers" id="keyframeMarkers"></div>
+        </div>
+      </div>
+
+      <!-- Bottom: Strips & Drawn Keyframe Thumbnails Dock (Pure Drawings, Grouped by Strip) -->
+      <div class="filmstrip-container" id="filmstripContainer">
+        <div class="filmstrip-header-clean">
+          <div class="filmstrip-header-left">
+            <span class="filmstrip-clean-title">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+              내가 그린 키프레임 & 스트립 목록
+            </span>
+            <span id="stripCountBadge" class="strip-count-pill" title="등록된 스트립 개수">0개 스트립</span>
+            <span id="filmstripCountBadge" class="filmstrip-count">0개 프레임</span>
+          </div>
+
+          <div class="strip-header-actions">
+            <!-- 새 스트립 준비 버튼 -->
+            <button id="btnNewStrip" class="btn-strip-header-tool" title="새로운 스트립 번호를 준비합니다. 빈 프레임에 그리면 해당 프레임부터 새 스트립이 시작됩니다.">
+              <span class="btn-icon">➕</span> 새 스트립
+            </button>
+            <!-- 전체 스트립 연속 재생 버튼 (빈구간 스킵) -->
+            <button id="btnPlayAllStrips" class="btn-strip-header-tool btn-play-all-strips" title="비디오는 끄고 오직 내가 그린 손그림들만 빈 구간을 건너뛰고 연속 재생합니다.">
+              <span class="icon-play-all">⏩</span>
+              <span class="lbl-play-all">전체 스트립 재생</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Strip Groups & Frame Thumbnails Container -->
+        <div class="filmstrip-scroll" id="filmstripScroll">
+          <div class="filmstrip-placeholder">✏️ 비디오 위에 그림을 그리면 스트립 구간과 내가 그린 순수 그림 썸네일들이 정렬되어 표시됩니다.</div>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Strip Delete Confirmation Modal -->
+  <div id="deleteStripModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-card modal-confirm">
+      <div class="modal-header">
+        <h3 class="danger-title">⚠️ 스트립 구간 및 드로잉 삭제 확인</h3>
+        <button id="btnCloseDeleteStripModal" class="btn-modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="deleteStripMessage" class="modal-desc">해당 스트립 구간과 그 안에 그려진 모든 키프레임 그림을 완전히 삭제하시겠습니까?</p>
+        <div class="confirm-warning-box">
+          <span class="warn-icon">🗑️</span>
+          <div class="warn-text">
+            <strong id="deleteStripTargetTitle">스트립 #1 (0f ~ 24f)</strong>
+            <p>삭제된 키프레임 그림은 복구할 수 없습니다. 계속 진행하시겠습니까?</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btnCancelDeleteStrip" class="btn btn-secondary">취소</button>
+        <button id="btnConfirmDeleteStrip" class="btn btn-danger-solid">
+          <span class="icon">🗑️</span> 스트립 및 드로잉 삭제
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Video Export Modal -->
+  <div id="exportVideoModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>🎥 애니메이션 비디오 파일로 저장</h3>
+        <button id="btnCloseExportModal" class="btn-modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc">타임라인에 맞추어 그린 손그림 애니메이션을 고화질 비디오(.webm) 파일로 즉시 인코딩하여 내보냅니다.</p>
+        <div class="export-options">
+          <label class="radio-option">
+            <input type="radio" name="exportMode" value="pure" checked>
+            <div class="option-content">
+              <strong>🎬 순수 애니메이션만 저장 (권장)</strong>
+              <span>동영상 배경 없이 내가 그린 손그림 애니메이션만 깨끗한 캔버스 배경에 저장합니다.</span>
+            </div>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="exportMode" value="composite">
+            <div class="option-content">
+              <strong>🎞️ 동영상 + 스케치 합성 저장</strong>
+              <span>원본 동영상 위에 내가 트레이싱한 그림이 겹쳐진 비디오로 저장합니다.</span>
+            </div>
+          </label>
+        </div>
+
+        <div class="export-settings-row">
+          <label for="exportBgColor">배경 스타일 (순수 애니메이션 시):</label>
+          <select id="exportBgColor">
+            <option value="#ffffff">흰색 스케치북 (#FFFFFF)</option>
+            <option value="#0f172a" selected>다크 스튜디오 (#0F172A)</option>
+            <option value="transparent">투명 배경 (알파 투명)</option>
+          </select>
+        </div>
+
+        <div id="exportProgressBar" class="export-progress-bar" style="display: none;">
+          <div id="exportProgressFill" class="export-progress-fill" style="width: 0%;"></div>
+          <span id="exportProgressText" class="export-progress-text">인코딩 준비 중...</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btnCancelExport" class="btn btn-secondary">취소</button>
+        <button id="btnStartExportVideo" class="btn btn-primary">
+          <span class="icon">💾</span> 비디오 인코딩 및 다운로드
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
