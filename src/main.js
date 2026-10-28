@@ -9,6 +9,9 @@ import { KeyframeEngine } from './keyframeEngine.js';
 import { ViewportEngine } from './viewportEngine.js';
 import { StripEngine } from './stripEngine.js';
 import { createSampleVideoBlob } from './sampleVideoGenerator.js';
+import { PWAManager } from './pwaManager.js';
+import { VersionManager } from './versionManager.js';
+import { AppInfoModal } from './ui/appInfoModal.js';
 
 class RotoSketchApp {
   constructor() {
@@ -50,6 +53,16 @@ class RotoSketchApp {
     this.transformEngine = new TransformEngine();
     this.keyframeEngine = new KeyframeEngine(this.width, this.height);
     this.stripEngine = new StripEngine();
+
+    // PWA & Automated Version Management Setup
+    this.pwaManager = new PWAManager();
+    this.versionManager = new VersionManager({
+      pwaManager: this.pwaManager
+    });
+    this.appInfoModal = new AppInfoModal({
+      versionManager: this.versionManager,
+      pwaManager: this.pwaManager
+    });
 
     this._queryDOMElements();
     this.viewportEngine = new ViewportEngine(this.canvasStack, this.stageViewport);
@@ -110,6 +123,7 @@ class RotoSketchApp {
     this.menuItemToggleOnion = document.getElementById('menuItemToggleOnion');
     this.menuItemExportSequence = document.getElementById('menuItemExportSequence');
     this.menuItemExportVideo = document.getElementById('menuItemExportVideo');
+    this.menuItemAppInfo = document.getElementById('menuItemAppInfo');
 
     // Tools
     this.toolBrush = document.getElementById('toolBrush');
@@ -540,6 +554,12 @@ class RotoSketchApp {
       this.menuItemExportVideo.addEventListener('click', () => {
         this.dropdownMoreMenu.style.display = 'none';
         this._openExportVideoModal();
+      });
+    }
+    if (this.menuItemAppInfo) {
+      this.menuItemAppInfo.addEventListener('click', () => {
+        if (this.dropdownMoreMenu) this.dropdownMoreMenu.style.display = 'none';
+        this.appInfoModal.show();
       });
     }
 

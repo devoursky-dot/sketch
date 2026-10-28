@@ -3010,3 +3010,300 @@ input[type='color']::-webkit-color-swatch {
   font-size: 13px;
   border-radius: 6px;
 }
+
+/* ==========================================================================
+   App Info Modal & Version Update Notifications (Modular System)
+   ========================================================================== */
+
+/* Menu Highlight Item */
+.dd-item.highlight-item {
+  background: rgba(56, 189, 248, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 8px;
+  margin: 4px 6px;
+}
+
+.dd-item.highlight-item:hover {
+  background: rgba(56, 189, 248, 0.18);
+  border-color: rgba(56, 189, 248, 0.5);
+  transform: translateY(-1px);
+}
+
+/* Toast Container (Top-Center Floating) */
+.app-toast-container {
+  position: fixed;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+  max-width: 90vw;
+  width: 520px;
+}
+
+.app-toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 18px;
+  border-radius: 12px;
+  background: rgba(14, 23, 38, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.6), 0 0 16px rgba(56, 189, 248, 0.25);
+  color: #f1f5f9;
+  font-size: 14px;
+  opacity: 0;
+  transform: translateY(-16px) scale(0.96);
+  transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.app-toast.show {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.app-toast.toast-success {
+  border-color: rgba(74, 222, 128, 0.5);
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.6), 0 0 16px rgba(74, 222, 128, 0.2);
+}
+
+/* Action Toast for Auto-Update */
+.toast-update-action {
+  border-left: 4px solid #38bdf8;
+  padding: 14px 18px;
+}
+
+.toast-update-action .toast-content {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  text-align: left;
+}
+
+.toast-update-action .toast-title {
+  font-weight: 700;
+  font-size: 14px;
+  color: #38bdf8;
+}
+
+.toast-update-action .toast-desc {
+  font-size: 12.5px;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+.toast-update-action .toast-btns {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.toast-action-btn {
+  background: linear-gradient(135deg, #0284c7, #0369a1);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4);
+}
+
+.toast-action-btn:hover {
+  background: linear-gradient(135deg, #0369a1, #075985);
+  transform: translateY(-1px);
+}
+
+.toast-close-btn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+}
+
+.toast-close-btn:hover {
+  color: #f1f5f9;
+}
+
+/* App Info Modal Card */
+.app-info-modal-card {
+  max-width: 580px;
+  width: 95vw;
+}
+
+.app-info-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-info-logo {
+  font-size: 26px;
+}
+
+.app-info-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.app-info-env-badge {
+  display: inline-block;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  margin-top: 2px;
+}
+
+.app-info-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 20px;
+}
+
+/* Info Section Card */
+.info-section-card {
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  transition: all 0.2s ease;
+}
+
+.info-section-card:hover {
+  border-color: rgba(56, 189, 248, 0.25);
+  background: rgba(15, 23, 42, 0.85);
+}
+
+.section-card-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.section-card-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.section-card-content h4 {
+  margin: 0;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.section-card-content p {
+  margin: 0;
+  font-size: 12.5px;
+  color: #94a3b8;
+  line-height: 1.45;
+}
+
+.action-btn-group {
+  margin-top: 6px;
+  display: flex;
+  gap: 8px;
+}
+
+/* Version Status Card */
+.version-status-card {
+  flex-direction: column;
+  background: linear-gradient(135deg, rgba(14, 23, 38, 0.85), rgba(15, 23, 42, 0.95));
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.version-status-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.version-label {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.version-number-display {
+  font-size: 20px;
+  font-weight: 700;
+  color: #38bdf8;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.btn-check-update {
+  font-size: 12.5px;
+  padding: 6px 12px;
+}
+
+.version-status-text {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 4px;
+}
+
+/* PWA Manual Guide */
+.pwa-guide-box {
+  background: rgba(8, 12, 22, 0.8);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-top: 8px;
+  border-left: 3px solid #38bdf8;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: #cbd5e1;
+}
+
+.guide-pill {
+  background: rgba(255, 255, 255, 0.12);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.app-info-footer-details {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 11.5px;
+  color: #64748b;
+  padding-top: 4px;
+}
+
+.link-github {
+  color: #38bdf8;
+  text-decoration: none;
+}
+
+.link-github:hover {
+  text-decoration: underline;
+}
+

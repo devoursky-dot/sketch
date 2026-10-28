@@ -1,0 +1,20 @@
+{
+  "name": "RotoSketch Studio",
+  "short_name": "RotoSketch",
+  "description": "스케치북 Pro 역추적 분석 기반 동영상 로토스코핑 & 2D 애니메이션 제작 스튜디오",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#080b12",
+  "theme_color": "#080b12",
+  "categories": ["graphics", "animation", "productivity"],
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

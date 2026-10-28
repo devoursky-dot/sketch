@@ -1,0 +1,13 @@
+{
+  "name": "RotoSketch Studio",
+  "version": "1.0.0",
+  "buildDate": "2026-10-29",
+  "changelog": "태블릿 PWA 홈 화면 추가 및 윈도우 무설치 포터블 단일 실행 파일 지원",
+  "download": {
+    "windowsPortable": {
+      "fileName": "RotoSketch Studio.exe",
+      "url": "https://github.com/devoursky-dot/sketch/releases/latest/download/RotoSketch.Studio.exe"
+    }
+  },
+  "minSupportedVersion": "1.0.0"
+}
